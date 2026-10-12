@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/lib/tools";
+import { buildSiteVerification } from "@/lib/siteVerification";
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 // Fonts are self-hosted from app/_fonts (see scripts/fetch-fonts.mjs), so the
@@ -21,6 +22,11 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem("cc:theme");if(t!
 const IS_NON_PROD =
   Boolean(process.env.NEXT_PUBLIC_DEPLOY_ENV) && process.env.NEXT_PUBLIC_DEPLOY_ENV !== "production";
 
+const verification = buildSiteVerification(
+  process.env.GOOGLE_SITE_VERIFICATION,
+  process.env.BING_SITE_VERIFICATION
+);
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -32,6 +38,7 @@ export const metadata: Metadata = {
   applicationName: "CODERCOPS Tools",
   authors: [{ name: "CODERCOPS", url: "https://www.codercops.com" }],
   ...(IS_NON_PROD ? { robots: { index: false, follow: false } } : {}),
+  ...(verification ? { verification } : {}),
   openGraph: {
     type: "website",
     siteName: "CODERCOPS Tools",
