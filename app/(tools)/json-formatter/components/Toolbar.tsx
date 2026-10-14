@@ -16,6 +16,7 @@ import {
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ShortcutsLegend } from "@/components/shared/ShortcutsLegend";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/lib/platform";
 
 interface ToolbarProps {
   indent: 2 | 4;
@@ -37,10 +38,6 @@ interface ToolbarProps {
   onJson5Toggle: (on: boolean) => void;
 }
 
-const isMac =
-  typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
-const MOD = isMac ? "⌘" : "Ctrl";
-
 export function Toolbar({
   indent,
   onIndentChange,
@@ -60,6 +57,8 @@ export function Toolbar({
   json5,
   onJson5Toggle,
 }: ToolbarProps) {
+  const { isMac, modKey, shiftKey } = usePlatform();
+
   return (
     <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border border-[var(--hairline)] rounded-lg bg-[var(--bg-card)]">
       <button type="button" className="btn btn-primary" onClick={onFormat}>
@@ -107,7 +106,7 @@ export function Toolbar({
         <Download className="w-3.5 h-3.5" />
         <span>Download</span>
       </button>
-      <button type="button" className="btn" onClick={onFind} title="Find in input (⌘F)">
+      <button type="button" className="btn" onClick={onFind} title={`Find in input (${isMac ? "⌘F" : "Ctrl+F"})`}>
         <Search className="w-3.5 h-3.5" />
         <span className="hidden lg:inline">Find</span>
       </button>
@@ -150,13 +149,13 @@ export function Toolbar({
       </button>
       <ShortcutsLegend
         shortcuts={[
-          { keys: [MOD, "Enter"], label: "Format" },
-          { keys: [MOD, "M"], label: "Minify" },
-          { keys: [MOD, "F"], label: "Find in input" },
-          { keys: [MOD, "⇧", "S"], label: "Sort keys" },
-          { keys: [MOD, "⇧", "K"], label: "Clear all" },
-          { keys: [MOD, "D"], label: "Download" },
-          { keys: [MOD, "K"], label: "Command palette" },
+          { keys: [modKey, "Enter"], label: "Format" },
+          { keys: [modKey, "M"], label: "Minify" },
+          { keys: [modKey, "F"], label: "Find in input" },
+          { keys: [modKey, shiftKey, "S"], label: "Sort keys" },
+          { keys: [modKey, shiftKey, "K"], label: "Clear all" },
+          { keys: [modKey, "D"], label: "Download" },
+          { keys: [modKey, "K"], label: "Command palette" },
         ]}
       />
       <span className="sr-only">

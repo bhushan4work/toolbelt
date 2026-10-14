@@ -23,8 +23,10 @@ import { HistoryPanel, useHistory } from "@/components/shared/HistoryPanel";
 import { useRegisterCommands } from "@/components/shared/CommandPalette";
 import { downloadBlob } from "@/lib/download";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/lib/platform";
 
 export function JsonFormatterClient() {
+  const { modKey, shiftKey } = usePlatform();
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [indent, setIndent] = useState<2 | 4>(2);
@@ -290,19 +292,19 @@ export function JsonFormatterClient() {
   useRegisterCommands(
     "json-formatter",
     [
-      { id: "json:format", section: "JSON Formatter", title: "Format", run: () => doFormat(), shortcut: ["⌘", "↵"] },
-      { id: "json:minify", section: "JSON Formatter", title: "Minify", run: doMinify, shortcut: ["⌘", "M"] },
+      { id: "json:format", section: "JSON Formatter", title: "Format", run: () => doFormat(), shortcut: [modKey, "↵"] },
+      { id: "json:minify", section: "JSON Formatter", title: "Minify", run: doMinify, shortcut: [modKey, "M"] },
       { id: "json:validate", section: "JSON Formatter", title: "Validate", run: doValidate },
-      { id: "json:sort", section: "JSON Formatter", title: "Sort keys alphabetically", run: doSort, shortcut: ["⌘", "⇧", "S"] },
+      { id: "json:sort", section: "JSON Formatter", title: "Sort keys alphabetically", run: doSort, shortcut: [modKey, shiftKey, "S"] },
       { id: "json:diff", section: "JSON Formatter", title: diffOpen ? "Close diff panel" : "Open diff panel", run: () => setDiffOpen((v) => !v) },
       { id: "json:stats", section: "JSON Formatter", title: statsOpen ? "Hide stats" : "Show stats", run: () => setStatsOpen((v) => !v) },
-      { id: "json:find", section: "JSON Formatter", title: "Find in input", run: () => setFindOpen(true), shortcut: ["⌘", "F"] },
+      { id: "json:find", section: "JSON Formatter", title: "Find in input", run: () => setFindOpen(true), shortcut: [modKey, "F"] },
       { id: "json:fetch", section: "JSON Formatter", title: "Fetch from URL", run: () => setUrlDialog(true) },
       { id: "json:sample", section: "JSON Formatter", title: "Load example", run: handleLoadSample },
-      { id: "json:download", section: "JSON Formatter", title: "Download as .json", run: handleDownload, shortcut: ["⌘", "D"] },
-      { id: "json:clear", section: "JSON Formatter", title: "Clear all", run: handleClear, shortcut: ["⌘", "K"] },
+      { id: "json:download", section: "JSON Formatter", title: "Download as .json", run: handleDownload, shortcut: [modKey, "D"] },
+      { id: "json:clear", section: "JSON Formatter", title: "Clear all", run: handleClear, shortcut: [modKey, shiftKey, "K"] },
     ],
-    [doFormat, doMinify, doValidate, doSort, diffOpen, statsOpen, handleDownload, handleLoadSample, handleClear]
+    [doFormat, doMinify, doValidate, doSort, diffOpen, statsOpen, handleDownload, handleLoadSample, handleClear, modKey, shiftKey]
   );
 
   // Scroll to find match

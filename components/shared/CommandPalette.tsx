@@ -14,6 +14,7 @@ import { Search, ArrowRight, Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { TOOLS } from "@/lib/tools";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/lib/platform";
 
 export interface Command {
   id: string;
@@ -35,6 +36,7 @@ interface PaletteCtx {
 const Ctx = createContext<PaletteCtx | null>(null);
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
+  const { modKey } = usePlatform();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
@@ -262,7 +264,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
                 select
               </span>
               <span className="flex items-center gap-2">
-                <kbd className="kbd">⌘</kbd>
+                <kbd className="kbd">{modKey}</kbd>
                 <kbd className="kbd">K</kbd>
                 toggle
               </span>

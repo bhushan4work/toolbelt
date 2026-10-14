@@ -10,6 +10,7 @@ import { EncodingsTab } from "./components/EncodingsTab";
 import { ShortcutsLegend } from "@/components/shared/ShortcutsLegend";
 import { useRegisterCommands } from "@/components/shared/CommandPalette";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/lib/platform";
 
 type TabId = "text" | "image" | "file" | "decode" | "encodings";
 
@@ -21,11 +22,8 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; hint: string }[] 
   { id: "encodings", label: "Other encodings", icon: <Binary className="w-3.5 h-3.5" />, hint: "Hex · Base32 · Base58 · Ascii85 · Hashes" },
 ];
 
-const isMac =
-  typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
-const MOD = isMac ? "⌘" : "Ctrl";
-
 export function Base64Client() {
+  const { modKey, shiftKey } = usePlatform();
   const [tab, setTab] = useState<TabId>("text");
   const tablistRef = useRef<HTMLDivElement>(null);
 
@@ -91,10 +89,10 @@ export function Base64Client() {
           </div>
           <ShortcutsLegend
             shortcuts={[
-              { keys: [MOD, "Enter"], label: "Encode/Decode" },
-              { keys: [MOD, "⇧", "S"], label: "Swap direction" },
-              { keys: [MOD, "⇧", "K"], label: "Clear" },
-              { keys: [MOD, "K"], label: "Command palette" },
+              { keys: [modKey, "Enter"], label: "Encode/Decode" },
+              { keys: [modKey, shiftKey, "S"], label: "Swap direction" },
+              { keys: [modKey, shiftKey, "K"], label: "Clear" },
+              { keys: [modKey, "K"], label: "Command palette" },
             ]}
           />
         </div>
