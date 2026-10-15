@@ -15,14 +15,6 @@ export function detectIsMac(platformOverride?: string): boolean {
   return /Mac|iPhone|iPad|iPod/i.test(platform);
 }
 
-export function getModifierKey(isMac: boolean): "⌘" | "Ctrl" {
-  return isMac ? "⌘" : "Ctrl";
-}
-
-export function getShiftKey(isMac: boolean): "⇧" | "Shift" {
-  return isMac ? "⇧" : "Shift";
-}
-
 export function formatModKey(key: string, isMac: boolean): string {
   return isMac ? `⌘${key}` : `Ctrl+${key}`;
 }
@@ -35,8 +27,6 @@ export interface PlatformInfo {
   isMac: boolean;
   modKey: "⌘" | "Ctrl";
   shiftKey: "⇧" | "Shift";
-  formatMod: (key: string) => string;
-  formatModShift: (key: string) => string;
 }
 
 const emptySubscribe = () => () => {};
@@ -48,18 +38,16 @@ const emptySubscribe = () => () => {};
  * a consistent initial state (isMac: false). After client mount, it evaluates
  * detectIsMac() to switch to macOS shortcuts if running on Apple platforms.
  */
-export function usePlatform(override?: boolean): PlatformInfo {
+export function usePlatform(): PlatformInfo {
   const isMac = useSyncExternalStore(
     emptySubscribe,
-    () => (override !== undefined ? override : detectIsMac()),
-    () => (override !== undefined ? override : false)
+    () => detectIsMac(),
+    () => false
   );
 
   return {
     isMac,
-    modKey: getModifierKey(isMac),
-    shiftKey: getShiftKey(isMac),
-    formatMod: (key: string) => formatModKey(key, isMac),
-    formatModShift: (key: string) => formatModShiftKey(key, isMac),
+    modKey: isMac ? "⌘" : "Ctrl",
+    shiftKey: isMac ? "⇧" : "Shift",
   };
 }

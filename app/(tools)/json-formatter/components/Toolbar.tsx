@@ -16,7 +16,7 @@ import {
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ShortcutsLegend } from "@/components/shared/ShortcutsLegend";
 import { cn } from "@/lib/cn";
-import { usePlatform } from "@/lib/platform";
+import { formatModKey, usePlatform } from "@/lib/platform";
 
 interface ToolbarProps {
   indent: 2 | 4;
@@ -106,7 +106,7 @@ export function Toolbar({
         <Download className="w-3.5 h-3.5" />
         <span>Download</span>
       </button>
-      <button type="button" className="btn" onClick={onFind} title={`Find in input (${isMac ? "⌘F" : "Ctrl+F"})`}>
+      <button type="button" className="btn" onClick={onFind} title={`Find in input (${formatModKey("F", isMac)})`}>
         <Search className="w-3.5 h-3.5" />
         <span className="hidden lg:inline">Find</span>
       </button>

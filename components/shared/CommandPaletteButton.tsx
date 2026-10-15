@@ -2,7 +2,7 @@
 
 import { Command as CommandIcon } from "lucide-react";
 import { useCommandPalette } from "./CommandPalette";
-import { usePlatform } from "@/lib/platform";
+import { formatModKey, usePlatform } from "@/lib/platform";
 
 export function CommandPaletteButton() {
   const { open } = useCommandPalette();
@@ -16,7 +16,7 @@ export function CommandPaletteButton() {
     >
       <CommandIcon className="w-3 h-3" />
       <kbd className="kbd !border-0 !bg-transparent !px-0 !py-0 !text-[10.5px]">
-        {isMac ? "⌘K" : "Ctrl+K"}
+        {formatModKey("K", isMac)}
       </kbd>
     </button>
   );
