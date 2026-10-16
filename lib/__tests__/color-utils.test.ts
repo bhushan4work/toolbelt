@@ -1,0 +1,204 @@
+import { describe, it, expect } from "vitest";
+import {
+  parseColor,
+  toHex,
+  toRgbString,
+  toHslString,
+  relativeLuminance,
+  contrastRatio,
+  wcagRating,
+  rgbToHsl,
+  hslToRgb,
+  type RgbaColor,
+} from "../color-utils";
+
+describe("color conversions for red", () => {
+  const red: RgbaColor = { r: 255, g: 0, b: 0, a: 1 };
+
+  it("converts red consistently between HEX, RGB, and HSL", () => {
+    const hex = toHex(red);
+    const rgbStr = toRgbString(red);
+    const hslStr = toHslString(red);
+
+    expect(hex).toBe("#ff0000");
+    expect(rgbStr).toBe("rgb(255, 0, 0)");
+    expect(hslStr).toBe("hsl(0, 100%, 50%)");
+
+    const fromHex = parseColor(hex);
+    const fromRgb = parseColor(rgbStr);
+    const fromHsl = parseColor(hslStr);
+    const fromNamed = parseColor("red");
+
+    expect(fromHex).toEqual({ ok: true, value: red });
+    expect(fromRgb).toEqual({ ok: true, value: red });
+    expect(fromHsl).toEqual({ ok: true, value: red });
+    expect(fromNamed).toEqual({ ok: true, value: red });
+  });
+
+  it("converts between RGB and HSL structures accurately", () => {
+    const hsl = rgbToHsl(red);
+    expect(hsl).toEqual({ h: 0, s: 100, l: 50, a: 1 });
+    const backToRgb = hslToRgb(hsl);
+    expect(backToRgb).toEqual(red);
+  });
+});
+
+describe("HEX parsing", () => {
+  it("correctly parses #0f08 with normalized alpha", () => {
+    const r = parseColor("#0f08");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.value.r).toBe(0);
+    expect(r.value.g).toBe(255);
+    expect(r.value.b).toBe(0);
+    expect(r.value.a).toBeCloseTo(136 / 255, 4);
+
+    expect(toHex(r.value)).toBe("#00ff0088");
+  });
+
+  it("parses 3, 6, and 8 digit hex formats", () => {
+    expect(parseColor("#fff")).toEqual({
+      ok: true,
+      value: { r: 255, g: 255, b: 255, a: 1 },
+    });
+    expect(parseColor("#000000")).toEqual({
+      ok: true,
+      value: { r: 0, g: 0, b: 0, a: 1 },
+    });
+    expect(parseColor("#ff000080")).toEqual({
+      ok: true,
+      value: { r: 255, g: 0, b: 0, a: 128 / 255 },
+    });
+  });
+});
+
+describe("RGB / RGBA and HSL / HSLA syntax varieties", () => {
+  it("supports comma and space syntax for rgb/rgba", () => {
+    const comma = parseColor("rgba(255, 128, 0, 0.5)");
+    const space = parseColor("rgb(255 128 0 / 0.5)");
+    const percentAlpha = parseColor("rgb(255 128 0 / 50%)");
+
+    expect(comma).toEqual({
+      ok: true,
+      value: { r: 255, g: 128, b: 0, a: 0.5 },
+    });
+    expect(space).toEqual({
+      ok: true,
+      value: { r: 255, g: 128, b: 0, a: 0.5 },
+    });
+    expect(percentAlpha).toEqual({
+      ok: true,
+      value: { r: 255, g: 128, b: 0, a: 0.5 },
+    });
+  });
+
+  it("supports comma and space syntax for hsl/hsla with angle units", () => {
+    const deg = parseColor("hsl(180deg, 100%, 50%)");
+    const turn = parseColor("hsl(0.5turn 100% 50% / 0.8)");
+
+    expect(deg).toEqual({
+      ok: true,
+      value: { r: 0, g: 255, b: 255, a: 1 },
+    });
+    expect(turn.ok && turn.value.a).toBe(0.8);
+    expect(turn.ok && turn.value.r).toBe(0);
+    expect(turn.ok && turn.value.g).toBe(255);
+  });
+});
+
+describe("invalid input handling", () => {
+  it.each([
+    "",
+    "   ",
+    "not-a-color",
+    "#12345",
+    "#gggggg",
+    "rgb(255, 0)",
+    "rgb(255, 0, 0, 0, 0)",
+    "hsl(100)",
+    "rgba(invalid)",
+  ])("returns ok: false for %s", (input) => {
+    const r = parseColor(input);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.error.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("relativeLuminance & contrastRatio", () => {
+  const white: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
+  const black: RgbaColor = { r: 0, g: 0, b: 0, a: 1 };
+
+  it("calculates accurate relative luminance for extremes", () => {
+    expect(relativeLuminance(white)).toBe(1);
+    expect(relativeLuminance(black)).toBe(0);
+  });
+
+  it("yields 21 for black on white", () => {
+    expect(contrastRatio(black, white)).toBe(21);
+    expect(contrastRatio(white, black)).toBe(21);
+  });
+
+  it("yields 1 for identical colors", () => {
+    expect(contrastRatio(white, white)).toBe(1);
+    expect(contrastRatio(black, black)).toBe(1);
+    const red: RgbaColor = { r: 255, g: 0, b: 0, a: 1 };
+    expect(contrastRatio(red, red)).toBe(1);
+  });
+
+  it("yields approximately 4.48 for #777777 on white and fails normal-text AA", () => {
+    const gray = parseColor("#777777");
+    expect(gray.ok).toBe(true);
+    if (!gray.ok) return;
+
+    const ratio = contrastRatio(gray.value, white);
+    expect(ratio).toBeCloseTo(4.48, 2);
+
+    const rating = wcagRating(ratio);
+    expect(rating.normalText.aa).toBe(false);
+    expect(rating.normalAA).toBe(false);
+    expect(rating.normalText.aaa).toBe(false);
+    expect(rating.largeText.aa).toBe(true);
+    expect(rating.largeAA).toBe(true);
+    expect(rating.largeText.aaa).toBe(false);
+  });
+});
+
+describe("wcagRating", () => {
+  it("correctly distinguishes normal and large text", () => {
+    // 4.48: fails normal AA (<4.5), passes large AA (>=3)
+    const r448 = wcagRating(4.48);
+    expect(r448.normalText.aa).toBe(false);
+    expect(r448.largeText.aa).toBe(true);
+
+    // 4.6: passes normal AA (>=4.5) and large AAA (>=4.5), fails normal AAA (<7)
+    const r46 = wcagRating(4.6);
+    expect(r46.normalText.aa).toBe(true);
+    expect(r46.normalText.aaa).toBe(false);
+    expect(r46.largeText.aa).toBe(true);
+    expect(r46.largeText.aaa).toBe(true);
+
+    // 7.5: passes everything
+    const r75 = wcagRating(7.5);
+    expect(r75.normalText.aa).toBe(true);
+    expect(r75.normalText.aaa).toBe(true);
+    expect(r75.largeText.aa).toBe(true);
+    expect(r75.largeText.aaa).toBe(true);
+
+    // 2.5: fails everything
+    const r25 = wcagRating(2.5);
+    expect(r25.normalText.aa).toBe(false);
+    expect(r25.normalText.aaa).toBe(false);
+    expect(r25.largeText.aa).toBe(false);
+    expect(r25.largeText.aaa).toBe(false);
+  });
+
+  it("supports querying by text size directly", () => {
+    expect(wcagRating(4.48, "normal")).toEqual({ aa: false, aaa: false });
+    expect(wcagRating(4.48, "large")).toEqual({ aa: true, aaa: false });
+    expect(wcagRating(5.0, "normal")).toEqual({ aa: true, aaa: false });
+    expect(wcagRating(5.0, "large")).toEqual({ aa: true, aaa: true });
+  });
+});

@@ -317,6 +317,59 @@ export const TOOLS: Tool[] = [
     },
     sitemapPriority: 0.9,
   },
+  {
+    slug: "color-converter",
+    path: "/color-converter",
+    title: "Color Converter & Contrast Checker",
+    tagline: "Design",
+    cardDescription:
+      "Convert between HEX, RGB, and HSL formats with alpha support, live swatch preview, and WCAG AA and AAA accessibility contrast checking.",
+    features: ["HEX", "RGB", "HSL", "Alpha", "WCAG contrast"],
+    accentVar: "--violet",
+    accentHex: "#9E7BFF",
+    metaTitle: "Color Converter & Contrast Checker - Free Tool",
+    metaDescription:
+      "Convert colors between HEX, RGB, and HSL formats with alpha support, live swatch preview, and WCAG AA/AAA contrast ratio checking. Fast, free, and private.",
+    ogTitle: "Color Converter & Contrast Checker - CODERCOPS Tools",
+    ogDescription:
+      "Convert between HEX, RGB, and HSL with alpha channel support, live swatch, and WCAG contrast ratios.",
+    heroBreadcrumb: "Convert · Preview · Contrast",
+    heroHeading: "Color Converter & Contrast Checker",
+    heroDim: "&",
+    heroDescription:
+      "Convert colors between HEX, RGB, and HSL formats and check WCAG accessibility contrast ratios in real time — 100% in your browser.",
+    jsonLdName: "Color Converter & Contrast Checker",
+    jsonLdDescription:
+      "Free online color converter and contrast checker supporting HEX, RGB, HSL, alpha channel, and WCAG AA/AAA contrast ratios.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "How does the color converter handle alpha transparency?",
+        a: "Alpha transparency is supported in 8-digit HEX (#rrggbbaa), rgba(), and hsla() notations. Alpha is normalized between 0 and 1 and factored into contrast calculations when blended over backgrounds.",
+      },
+      {
+        q: "What are WCAG AA and AAA contrast requirements?",
+        a: "Under WCAG 2.1 guidelines, normal text requires a contrast ratio of at least 4.5:1 for level AA and 7:1 for level AAA. Large text (at least 18pt or 14pt bold) requires at least 3:1 for AA and 4.5:1 for AAA.",
+      },
+      {
+        q: "Can I enter modern CSS space-separated color syntax?",
+        a: "Yes. Both legacy comma-separated syntax like rgb(255, 0, 0) and modern CSS Color 4 space-separated syntax like rgb(255 0 0 / 0.5) and hsl(200 100% 50% / 0.8) are supported.",
+      },
+      {
+        q: "Is any color data sent to a server?",
+        a: "No. All conversions, swatch rendering, and contrast calculations run entirely in your browser using client-side JavaScript. No data ever leaves your device.",
+      },
+    ],
+    cta: {
+      headline: "Building accessible web apps and design systems?",
+      sub: "CODERCOPS designs and builds accessible, high-performance web applications and UI component systems for startups and enterprises.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get in touch",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
