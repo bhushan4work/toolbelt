@@ -25,164 +25,7 @@ export interface WcagRatingResult {
     aa: boolean;
     aaa: boolean;
   };
-  normalAA: boolean;
-  normalAAA: boolean;
-  largeAA: boolean;
-  largeAAA: boolean;
-  aa: boolean;
-  aaa: boolean;
 }
-
-const NAMED_COLORS: Record<string, string> = {
-  black: "#000000",
-  silver: "#c0c0c0",
-  gray: "#808080",
-  grey: "#808080",
-  white: "#ffffff",
-  maroon: "#800000",
-  red: "#ff0000",
-  purple: "#800080",
-  fuchsia: "#ff00ff",
-  green: "#008000",
-  lime: "#00ff00",
-  olive: "#808000",
-  yellow: "#ffff00",
-  navy: "#000080",
-  blue: "#0000ff",
-  teal: "#008080",
-  aqua: "#00ffff",
-  orange: "#ffa500",
-  aliceblue: "#f0f8ff",
-  antiquewhite: "#faebd7",
-  aquamarine: "#7fffd4",
-  azure: "#f0ffff",
-  beige: "#f5f5dc",
-  bisque: "#ffe4c4",
-  blanchedalmond: "#ffebcd",
-  blueviolet: "#8a2be2",
-  brown: "#a52a2a",
-  burlywood: "#deb887",
-  cadetblue: "#5f9ea0",
-  chartreuse: "#7fff00",
-  chocolate: "#d2691e",
-  coral: "#ff7f50",
-  cornflowerblue: "#6495ed",
-  cornsilk: "#fff8dc",
-  crimson: "#dc143c",
-  cyan: "#00ffff",
-  darkblue: "#00008b",
-  darkcyan: "#008b8b",
-  darkgoldenrod: "#b8860b",
-  darkgray: "#a9a9a9",
-  darkgrey: "#a9a9a9",
-  darkgreen: "#006400",
-  darkkhaki: "#bdb76b",
-  darkmagenta: "#8b008b",
-  darkolivegreen: "#556b2f",
-  darkorange: "#ff8c00",
-  darkorchid: "#9932cc",
-  darkred: "#8b0000",
-  darksalmon: "#e9967a",
-  darkseagreen: "#8fbc8f",
-  darkslateblue: "#483d8b",
-  darkslategray: "#2f4f4f",
-  darkslategrey: "#2f4f4f",
-  darkturquoise: "#00ced1",
-  darkviolet: "#9400d3",
-  deeppink: "#ff1493",
-  deepskyblue: "#00bfff",
-  dimgray: "#696969",
-  dimgrey: "#696969",
-  dodgerblue: "#1e90ff",
-  firebrick: "#b22222",
-  floralwhite: "#fffaf0",
-  forestgreen: "#228b22",
-  gainsboro: "#dcdcdc",
-  ghostwhite: "#f8f8ff",
-  gold: "#ffd700",
-  goldenrod: "#daa520",
-  greenyellow: "#adff2f",
-  honeydew: "#f0fff0",
-  hotpink: "#ff69b4",
-  indianred: "#cd5c5c",
-  indigo: "#4b0082",
-  ivory: "#fffff0",
-  khaki: "#f0e68c",
-  lavender: "#e6e6fa",
-  lavenderblush: "#fff0f5",
-  lawngreen: "#7cfc00",
-  lemonchiffon: "#fffacd",
-  lightblue: "#add8e6",
-  lightcoral: "#f08080",
-  lightcyan: "#e0ffff",
-  lightgoldenrodyellow: "#fafad2",
-  lightgray: "#d3d3d3",
-  lightgrey: "#d3d3d3",
-  lightgreen: "#90ee90",
-  lightpink: "#ffb6c1",
-  lightsalmon: "#ffa07a",
-  lightseagreen: "#20b2aa",
-  lightskyblue: "#87cefa",
-  lightslategray: "#778899",
-  lightslategrey: "#778899",
-  lightsteelblue: "#b0c4de",
-  lightyellow: "#ffffe0",
-  limegreen: "#32cd32",
-  linen: "#faf0e6",
-  magenta: "#ff00ff",
-  mediumaquamarine: "#66cdaa",
-  mediumblue: "#0000cd",
-  mediumorchid: "#ba55d3",
-  mediumpurple: "#9370db",
-  mediumseagreen: "#3cb371",
-  mediumslateblue: "#7b68ee",
-  mediumspringgreen: "#00fa9a",
-  mediumturquoise: "#48d1cc",
-  mediumvioletred: "#c71585",
-  midnightblue: "#191970",
-  mintcream: "#f5fffa",
-  mistyrose: "#ffe4e1",
-  moccasin: "#ffe4b5",
-  navajowhite: "#ffdead",
-  oldlace: "#fdf5e6",
-  olivedrab: "#6b8e23",
-  orangered: "#ff4500",
-  orchid: "#da70d6",
-  palegoldenrod: "#eee8aa",
-  palegreen: "#98fb98",
-  paleturquoise: "#afeeee",
-  palevioletred: "#db7093",
-  papayawhip: "#ffefd5",
-  peachpuff: "#ffdab9",
-  peru: "#cd853f",
-  pink: "#ffc0cb",
-  plum: "#dda0dd",
-  powderblue: "#b0e0e6",
-  rosybrown: "#bc8f8f",
-  royalblue: "#4169e1",
-  saddlebrown: "#8b4513",
-  salmon: "#fa8072",
-  sandybrown: "#f4a460",
-  seagreen: "#2e8b57",
-  seashell: "#fff5ee",
-  sienna: "#a0522d",
-  skyblue: "#87ceeb",
-  slateblue: "#6a5acd",
-  slategray: "#708090",
-  slategrey: "#708090",
-  snow: "#fffafa",
-  springgreen: "#00ff7f",
-  steelblue: "#4682b4",
-  tan: "#d2b48c",
-  thistle: "#d8bfd8",
-  tomato: "#ff6347",
-  turquoise: "#40e0d0",
-  violet: "#ee82ee",
-  wheat: "#f5deb3",
-  whitesmoke: "#f5f5f5",
-  yellowgreen: "#9acd32",
-  rebeccapurple: "#663399",
-};
 
 /**
  * Converts an HSL color to RGBA.
@@ -482,8 +325,7 @@ function parseHsl(content: string): ParseColorResult {
 
 /**
  * Parses a color string in HEX (#rgb, #rgba, #rrggbb, #rrggbbaa),
- * RGB / RGBA (comma or space syntax), HSL / HSLA (comma or space syntax),
- * or standard named color.
+ * RGB / RGBA (comma or space syntax), or HSL / HSLA (comma or space syntax).
  *
  * Normalizes alpha to [0, 1] and returns { ok: false, error: string } for invalid inputs.
  */
@@ -514,18 +356,9 @@ export function parseColor(input: string): ParseColorResult {
     return parseHsl(hslMatch[1]);
   }
 
-  // Named colors
-  const lower = str.toLowerCase();
-  if (lower === "transparent") {
-    return { ok: true, value: { r: 0, g: 0, b: 0, a: 0 } };
-  }
-  if (NAMED_COLORS[lower]) {
-    return parseHex(NAMED_COLORS[lower]);
-  }
-
   return {
     ok: false,
-    error: `Unrecognized color format: "${input}". Expected #HEX, rgb(), rgba(), hsl(), hsla(), or named color.`,
+    error: `Unrecognized color format: "${input}". Expected #HEX, rgb(), rgba(), hsl(), or hsla().`,
   };
 }
 
@@ -604,26 +437,26 @@ export function relativeLuminance(color: RgbaColor): number {
 
 /**
  * Calculates the WCAG 2.1 contrast ratio between two colors (ranging from 1 to 21).
- * If color1 has an alpha channel < 1, it is blended over color2 before computing luminance.
+ * If the background has alpha < 1, it is first composited onto white (#ffffff).
+ * If the foreground has alpha < 1, it is then composited onto the resulting background.
+ * The contrast ratio is calculated between the two final opaque colors.
  */
 export function contrastRatio(color1: RgbaColor, color2: RgbaColor): number {
-  let fg = color1;
-  if (fg.a < 1) {
-    const bg = color2.a < 1 ? { r: 255, g: 255, b: 255, a: 1 } : color2;
-    fg = {
-      r: fg.r * fg.a + bg.r * (1 - fg.a),
-      g: fg.g * fg.a + bg.g * (1 - fg.a),
-      b: fg.b * fg.a + bg.b * (1 - fg.a),
-      a: 1,
-    };
-  }
-
-  const bg = color2.a < 1 ? {
-    r: color2.r * color2.a + 255 * (1 - color2.a),
-    g: color2.g * color2.a + 255 * (1 - color2.a),
-    b: color2.b * color2.a + 255 * (1 - color2.a),
+  const bgAlpha = Math.max(0, Math.min(1, color2.a));
+  const bg: RgbaColor = {
+    r: color2.r * bgAlpha + 255 * (1 - bgAlpha),
+    g: color2.g * bgAlpha + 255 * (1 - bgAlpha),
+    b: color2.b * bgAlpha + 255 * (1 - bgAlpha),
     a: 1,
-  } : color2;
+  };
+
+  const fgAlpha = Math.max(0, Math.min(1, color1.a));
+  const fg: RgbaColor = {
+    r: color1.r * fgAlpha + bg.r * (1 - fgAlpha),
+    g: color1.g * fgAlpha + bg.g * (1 - fgAlpha),
+    b: color1.b * fgAlpha + bg.b * (1 - fgAlpha),
+    a: 1,
+  };
 
   const l1 = relativeLuminance(fg);
   const l2 = relativeLuminance(bg);
@@ -637,35 +470,15 @@ export function contrastRatio(color1: RgbaColor, color2: RgbaColor): number {
 /**
  * Computes WCAG 2.1 AA and AAA compliance ratings for normal and large text.
  */
-export function wcagRating(ratio: number): WcagRatingResult;
-export function wcagRating(
-  ratio: number,
-  textSize: "normal" | "large"
-): { aa: boolean; aaa: boolean };
-export function wcagRating(
-  ratio: number,
-  textSize?: "normal" | "large"
-): WcagRatingResult | { aa: boolean; aaa: boolean } {
-  const normalAA = ratio >= 4.5;
-  const normalAAA = ratio >= 7;
-  const largeAA = ratio >= 3;
-  const largeAAA = ratio >= 4.5;
-
-  if (textSize === "large") {
-    return { aa: largeAA, aaa: largeAAA };
-  }
-  if (textSize === "normal") {
-    return { aa: normalAA, aaa: normalAAA };
-  }
-
+export function wcagRating(ratio: number): WcagRatingResult {
   return {
-    normalText: { aa: normalAA, aaa: normalAAA },
-    largeText: { aa: largeAA, aaa: largeAAA },
-    normalAA,
-    normalAAA,
-    largeAA,
-    largeAAA,
-    aa: normalAA,
-    aaa: normalAAA,
+    normalText: {
+      aa: ratio >= 4.5,
+      aaa: ratio >= 7,
+    },
+    largeText: {
+      aa: ratio >= 3,
+      aaa: ratio >= 4.5,
+    },
   };
 }

@@ -325,8 +325,8 @@ export const TOOLS: Tool[] = [
     cardDescription:
       "Convert between HEX, RGB, and HSL formats with alpha support, live swatch preview, and WCAG AA and AAA accessibility contrast checking.",
     features: ["HEX", "RGB", "HSL", "Alpha", "WCAG contrast"],
-    accentVar: "--violet",
-    accentHex: "#9E7BFF",
+    accentVar: "--fuchsia",
+    accentHex: "#F26DF0",
     metaTitle: "Color Converter & Contrast Checker - Free Tool",
     metaDescription:
       "Convert colors between HEX, RGB, and HSL formats with alpha support, live swatch preview, and WCAG AA/AAA contrast ratio checking. Fast, free, and private.",

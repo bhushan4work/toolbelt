@@ -27,12 +27,10 @@ describe("color conversions for red", () => {
     const fromHex = parseColor(hex);
     const fromRgb = parseColor(rgbStr);
     const fromHsl = parseColor(hslStr);
-    const fromNamed = parseColor("red");
 
     expect(fromHex).toEqual({ ok: true, value: red });
     expect(fromRgb).toEqual({ ok: true, value: red });
     expect(fromHsl).toEqual({ ok: true, value: red });
-    expect(fromNamed).toEqual({ ok: true, value: red });
   });
 
   it("converts between RGB and HSL structures accurately", () => {
@@ -105,6 +103,17 @@ describe("RGB / RGBA and HSL / HSLA syntax varieties", () => {
     expect(turn.ok && turn.value.r).toBe(0);
     expect(turn.ok && turn.value.g).toBe(255);
   });
+
+  it("supports plain three-value space-separated syntax without slash", () => {
+    expect(parseColor("rgb(255 0 0)")).toEqual({
+      ok: true,
+      value: { r: 255, g: 0, b: 0, a: 1 },
+    });
+    expect(parseColor("hsl(0 100% 50%)")).toEqual({
+      ok: true,
+      value: { r: 255, g: 0, b: 0, a: 1 },
+    });
+  });
 });
 
 describe("invalid input handling", () => {
@@ -112,6 +121,9 @@ describe("invalid input handling", () => {
     "",
     "   ",
     "not-a-color",
+    "red",
+    "transparent",
+    "blue",
     "#12345",
     "#gggggg",
     "rgb(255, 0)",
@@ -158,11 +170,25 @@ describe("relativeLuminance & contrastRatio", () => {
 
     const rating = wcagRating(ratio);
     expect(rating.normalText.aa).toBe(false);
-    expect(rating.normalAA).toBe(false);
     expect(rating.normalText.aaa).toBe(false);
     expect(rating.largeText.aa).toBe(true);
-    expect(rating.largeAA).toBe(true);
     expect(rating.largeText.aaa).toBe(false);
+  });
+
+  it("composites translucent background onto white, then translucent foreground onto background", () => {
+    const fg = parseColor("rgba(255, 255, 255, 0.5)");
+    const bg = parseColor("rgba(0, 0, 0, 0.5)");
+    expect(fg.ok).toBe(true);
+    expect(bg.ok).toBe(true);
+    if (!fg.ok || !bg.ok) return;
+
+    // Background (black 0.5) over white (255) => rgb(127.5, 127.5, 127.5) with luminance ~0.214
+    // Foreground (white 0.5) over that background => rgb(191.25, 191.25, 191.25) with luminance ~0.523
+    // Correct contrast ratio is ~2.17 : 1
+    // If incorrectly calculated as white (luminance 1) against gray (~0.214), ratio would be ~3.98 : 1
+    const ratio = contrastRatio(fg.value, bg.value);
+    expect(ratio).toBeCloseTo(2.17, 2);
+    expect(ratio).not.toBeCloseTo(3.98, 1);
   });
 });
 
@@ -171,7 +197,9 @@ describe("wcagRating", () => {
     // 4.48: fails normal AA (<4.5), passes large AA (>=3)
     const r448 = wcagRating(4.48);
     expect(r448.normalText.aa).toBe(false);
+    expect(r448.normalText.aaa).toBe(false);
     expect(r448.largeText.aa).toBe(true);
+    expect(r448.largeText.aaa).toBe(false);
 
     // 4.6: passes normal AA (>=4.5) and large AAA (>=4.5), fails normal AAA (<7)
     const r46 = wcagRating(4.6);
@@ -193,12 +221,5 @@ describe("wcagRating", () => {
     expect(r25.normalText.aaa).toBe(false);
     expect(r25.largeText.aa).toBe(false);
     expect(r25.largeText.aaa).toBe(false);
-  });
-
-  it("supports querying by text size directly", () => {
-    expect(wcagRating(4.48, "normal")).toEqual({ aa: false, aaa: false });
-    expect(wcagRating(4.48, "large")).toEqual({ aa: true, aaa: false });
-    expect(wcagRating(5.0, "normal")).toEqual({ aa: true, aaa: false });
-    expect(wcagRating(5.0, "large")).toEqual({ aa: true, aaa: true });
   });
 });

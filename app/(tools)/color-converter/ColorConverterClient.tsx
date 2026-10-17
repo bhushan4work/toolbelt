@@ -42,7 +42,7 @@ function hex6(color: RgbaColor): string {
 }
 
 export function ColorConverterClient() {
-  const [colorInput, setColorInput] = useState("#9E7BFF");
+  const [colorInput, setColorInput] = useState("#F26DF0");
   const [fgInput, setFgInput] = useState("#FFFFFF");
   const [bgInput, setBgInput] = useState("#0A0B0F");
   const { push } = useToast();
@@ -63,7 +63,7 @@ export function ColorConverterClient() {
   const rgbValue = useMemo(() => (parsed.ok ? toRgbString(parsed.value) : ""), [parsed]);
   const hslValue = useMemo(() => (parsed.ok ? toHslString(parsed.value) : ""), [parsed]);
   const pickerHex = useMemo(
-    () => (parsed.ok ? hex6(parsed.value) : "#9E7BFF"),
+    () => (parsed.ok ? hex6(parsed.value) : "#F26DF0"),
     [parsed]
   );
   const alphaVal = parsed.ok ? parsed.value.a : 1;
@@ -189,7 +189,7 @@ export function ColorConverterClient() {
       {/* Top action row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 font-mono text-[12px] text-[var(--fg-dim)]">
-          <Palette className="w-3.5 h-3.5 text-[var(--violet)]" />
+          <Palette className="w-3.5 h-3.5 text-[var(--fuchsia)]" />
           <span>Live Color Inspector & WCAG 2.1 Contrast Calculator</span>
         </div>
         <ShortcutsLegend
@@ -212,7 +212,7 @@ export function ColorConverterClient() {
               Color input
             </label>
             <span className="font-mono text-[11px] text-[var(--fg-dim)]">
-              HEX · RGB · HSL · Named
+              HEX · RGB · HSL
             </span>
           </div>
 
@@ -223,9 +223,9 @@ export function ColorConverterClient() {
                 type="text"
                 value={colorInput}
                 onChange={(e) => setColorInput(e.target.value)}
-                placeholder="e.g. #9E7BFF, rgb(158, 123, 255), hsl(257, 100%, 74%)"
+                placeholder="e.g. #F26DF0, rgb(242, 109, 240), hsl(301, 84%, 69%)"
                 className={cn(
-                  "w-full px-3.5 py-2.5 rounded-lg font-mono text-[13.5px] bg-[var(--bg-card)] border text-[var(--fg)] placeholder:text-[var(--fg-dim)] transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--violet)]",
+                  "w-full px-3.5 py-2.5 rounded-lg font-mono text-[13.5px] bg-[var(--bg-card)] border text-[var(--fg)] placeholder:text-[var(--fg-dim)] transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--fuchsia)]",
                   parsed.ok
                     ? "border-[var(--hairline-strong)]"
                     : "border-[var(--rose)] ring-1 ring-[var(--rose)]"
@@ -242,12 +242,12 @@ export function ColorConverterClient() {
                 type="color"
                 value={pickerHex}
                 onChange={(e) => handleNativeColorChange(e.target.value)}
-                className="sr-only"
+                className="sr-only peer"
                 aria-label="Pick color with native system picker"
               />
               <label
                 htmlFor={colorPickerId}
-                className="w-10 h-10 rounded-lg border border-[var(--hairline-strong)] shadow-sm cursor-pointer overflow-hidden flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+                className="w-10 h-10 rounded-lg border border-[var(--hairline-strong)] shadow-sm cursor-pointer overflow-hidden flex items-center justify-center hover:scale-105 active:scale-95 transition-transform peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--fuchsia)]"
                 style={{ backgroundColor: pickerHex }}
                 title="Click to open system color picker"
               >
@@ -308,7 +308,7 @@ export function ColorConverterClient() {
                   type="button"
                   onClick={useAsForeground}
                   disabled={!parsed.ok}
-                  className="btn btn-ghost px-2 py-1 text-[11px] font-mono backdrop-blur-md bg-black/40 border border-white/10 text-white hover:bg-black/60"
+                  className="backdrop-blur-md bg-black/40 border border-white/10 px-2.5 py-1 rounded-md font-mono text-[11px] text-white hover:bg-black/60 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Use this color as contrast foreground"
                 >
                   Set as FG
@@ -317,7 +317,7 @@ export function ColorConverterClient() {
                   type="button"
                   onClick={useAsBackground}
                   disabled={!parsed.ok}
-                  className="btn btn-ghost px-2 py-1 text-[11px] font-mono backdrop-blur-md bg-black/40 border border-white/10 text-white hover:bg-black/60"
+                  className="backdrop-blur-md bg-black/40 border border-white/10 px-2.5 py-1 rounded-md font-mono text-[11px] text-white hover:bg-black/60 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Use this color as contrast background"
                 >
                   Set as BG
@@ -330,7 +330,7 @@ export function ColorConverterClient() {
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between font-mono text-[12px]">
               <label htmlFor={alphaSliderId} className="flex items-center gap-1.5 text-[var(--fg-muted)]">
-                <Sliders className="w-3.5 h-3.5 text-[var(--violet)]" />
+                <Sliders className="w-3.5 h-3.5 text-[var(--fuchsia)]" />
                 <span>Alpha / Opacity</span>
               </label>
               <span className="text-[var(--fg)] font-semibold">
@@ -346,7 +346,7 @@ export function ColorConverterClient() {
               value={alphaVal}
               disabled={!parsed.ok}
               onChange={(e) => handleAlphaChange(parseFloat(e.target.value))}
-              className="w-full accent-[var(--violet)] cursor-pointer"
+              className="w-full accent-[var(--fuchsia)] cursor-pointer"
               aria-label="Adjust opacity alpha channel"
             />
           </div>
@@ -434,7 +434,7 @@ export function ColorConverterClient() {
 
           {/* Quick Info Box */}
           <div className="card p-4 bg-[var(--bg-card)] border border-[var(--hairline)] flex items-start gap-3">
-            <Sparkles className="w-4 h-4 text-[var(--violet)] shrink-0 mt-0.5" />
+            <Sparkles className="w-4 h-4 text-[var(--fuchsia)] shrink-0 mt-0.5" />
             <p className="text-[12.5px] text-[var(--fg-muted)] leading-relaxed">
               Accepts HEX (3, 4, 6, 8 digits), standard <code className="text-[var(--fg)]">rgb()</code> /{" "}
               <code className="text-[var(--fg)]">rgba()</code>, and <code className="text-[var(--fg)]">hsl()</code> /{" "}
@@ -461,7 +461,7 @@ export function ColorConverterClient() {
             className="btn self-start sm:self-auto text-[12.5px] font-mono"
             aria-label="Swap foreground and background colors"
           >
-            <ArrowUpDown className="w-3.5 h-3.5 text-[var(--violet)]" />
+            <ArrowUpDown className="w-3.5 h-3.5 text-[var(--fuchsia)]" />
             <span>Swap colors</span>
           </button>
         </div>
@@ -489,7 +489,7 @@ export function ColorConverterClient() {
                 onChange={(e) => setFgInput(e.target.value)}
                 placeholder="#FFFFFF"
                 className={cn(
-                  "flex-1 px-3.5 py-2.5 rounded-lg font-mono text-[13px] bg-[var(--bg-raise)] border text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--violet)]",
+                  "flex-1 px-3.5 py-2.5 rounded-lg font-mono text-[13px] bg-[var(--bg-raise)] border text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--fuchsia)]",
                   parsedFg.ok ? "border-[var(--hairline)]" : "border-[var(--rose)] ring-1 ring-[var(--rose)]"
                 )}
                 aria-invalid={!parsedFg.ok}
@@ -499,12 +499,12 @@ export function ColorConverterClient() {
                 type="color"
                 value={parsedFg.ok ? hex6(parsedFg.value) : "#ffffff"}
                 onChange={(e) => setFgInput(e.target.value)}
-                className="sr-only"
+                className="sr-only peer"
                 aria-label="Foreground color picker"
               />
               <label
                 htmlFor={fgPickerId}
-                className="w-10 h-10 rounded-lg border border-[var(--hairline-strong)] cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
+                className="w-10 h-10 rounded-lg border border-[var(--hairline-strong)] cursor-pointer overflow-hidden flex items-center justify-center shrink-0 peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--fuchsia)]"
                 style={{ backgroundColor: parsedFg.ok ? toHex(parsedFg.value) : "#ffffff" }}
                 title="Pick foreground color"
               >
@@ -534,7 +534,7 @@ export function ColorConverterClient() {
                 onChange={(e) => setBgInput(e.target.value)}
                 placeholder="#0A0B0F"
                 className={cn(
-                  "flex-1 px-3.5 py-2.5 rounded-lg font-mono text-[13px] bg-[var(--bg-raise)] border text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--violet)]",
+                  "flex-1 px-3.5 py-2.5 rounded-lg font-mono text-[13px] bg-[var(--bg-raise)] border text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--fuchsia)]",
                   parsedBg.ok ? "border-[var(--hairline)]" : "border-[var(--rose)] ring-1 ring-[var(--rose)]"
                 )}
                 aria-invalid={!parsedBg.ok}
@@ -544,12 +544,12 @@ export function ColorConverterClient() {
                 type="color"
                 value={parsedBg.ok ? hex6(parsedBg.value) : "#000000"}
                 onChange={(e) => setBgInput(e.target.value)}
-                className="sr-only"
+                className="sr-only peer"
                 aria-label="Background color picker"
               />
               <label
                 htmlFor={bgPickerId}
-                className="w-10 h-10 rounded-lg border border-[var(--hairline-strong)] cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
+                className="w-10 h-10 rounded-lg border border-[var(--hairline-strong)] cursor-pointer overflow-hidden flex items-center justify-center shrink-0 peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--fuchsia)]"
                 style={{ backgroundColor: parsedBg.ok ? toHex(parsedBg.value) : "#000000" }}
                 title="Pick background color"
               >
@@ -609,7 +609,7 @@ export function ColorConverterClient() {
                       contrastResult.ratio >= 7
                         ? "bg-[var(--cyan)]"
                         : contrastResult.ratio >= 4.5
-                        ? "bg-[var(--violet)]"
+                        ? "bg-[var(--fuchsia)]"
                         : contrastResult.ratio >= 3
                         ? "bg-[var(--amber)]"
                         : "bg-[var(--rose)]"
