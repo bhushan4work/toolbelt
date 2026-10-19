@@ -10,7 +10,7 @@ const WEBSITE_ID = `${SITE_URL}/#website`;
 
 // The initial public release. dateModified is the build date (BUILD_DATE is
 // set in next.config.js), not the request date, since pages render per request.
-const SITE_PUBLISHED = "2026-07-08";
+export const SITE_PUBLISHED = "2026-07-08";
 
 // The publisher is CODERCOPS (the agency). Keyed by an @id on this domain so the
 // WebSite node can reference it. sameAs lists only identities we can honestly

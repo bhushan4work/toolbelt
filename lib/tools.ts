@@ -47,6 +47,8 @@ export interface Tool {
   faqs: ToolFaq[];
   cta: ToolCta;
   sitemapPriority: number;
+  /** ISO date string (YYYY-MM-DD) overriding build-time git history for the sitemap. */
+  lastModified?: string;
 }
 
 const CTA_PROJECTS = "https://www.codercops.com/projects";
