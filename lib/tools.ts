@@ -317,6 +317,65 @@ export const TOOLS: Tool[] = [
     },
     sitemapPriority: 0.9,
   },
+  {
+    slug: "cron-explainer",
+    path: "/cron-explainer",
+    title: "Cron Expression Explainer",
+    tagline: "Scheduling",
+    cardDescription:
+      "Translate cron schedules into plain English, inspect field breakdowns, and preview upcoming run times in UTC or local time.",
+    features: [
+      "Plain English",
+      "Next runs",
+      "Ranges and steps",
+      "Macros",
+      "UTC or local",
+    ],
+    accentVar: "--rose",
+    accentHex: "#FF4D6D",
+    metaTitle: "Cron Expression Explainer - Free Online Tool",
+    metaDescription:
+      "Free online cron expression explainer and validator. Translate cron schedules into plain English, inspect field breakdowns, and preview upcoming execution times.",
+    ogTitle: "Cron Expression Explainer - CODERCOPS Tools",
+    ogDescription:
+      "Translate cron expressions into plain English, inspect each field, and calculate upcoming runs in UTC or local time.",
+    heroBreadcrumb: "Schedule · Breakdown · Next runs",
+    heroHeading: "Cron Expression Explainer",
+    heroDim: "",
+    heroDescription:
+      "Paste any cron expression to translate it into plain English, inspect each field's breakdown, and preview upcoming run times in UTC or your local timezone.",
+    jsonLdName: "Cron Expression Explainer",
+    jsonLdDescription:
+      "Free online cron expression explainer and schedule validator. Convert cron expressions to plain English and calculate upcoming execution times.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "What is a cron expression?",
+        a: "A cron expression is a string of five fields separated by spaces that defines a recurring schedule in Unix-like systems. It specifies the minute, hour, day of the month, month, and day of the week for a task to run.",
+      },
+      {
+        q: "How does the day-of-month and day-of-week combination work?",
+        a: "In standard cron, if both the day-of-month and day-of-week fields are restricted (neither is *), they operate with OR semantics. The job executes when either the day of month matches OR the day of week matches.",
+      },
+      {
+        q: "Are cron expressions evaluated in UTC or local time?",
+        a: "Most cloud schedulers and server crontabs default to UTC, but local system crontabs run in the host server's local time zone. This tool lets you preview next runs in either UTC or your browser's local time zone.",
+      },
+      {
+        q: "Does this tool upload my cron expressions?",
+        a: "No. All parsing, validation, and schedule projections are computed entirely client-side in your browser. Nothing is sent to any server.",
+      },
+    ],
+    cta: {
+      headline: "Building scheduled jobs or background workers?",
+      sub: "CODERCOPS builds production-grade backends, job queues, and scheduled data pipelines for startups and businesses.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get a free quote",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
