@@ -203,10 +203,338 @@ describe("toLanguageLiteral escaping", () => {
 });
 
 describe("magic bytes", () => {
+  function makeFtypBox(majorBrand: string, compatibleBrands: string[] = []): Uint8Array {
+    const boxSize = 16 + compatibleBrands.length * 4;
+    const buf = new Uint8Array(boxSize);
+    const view = new DataView(buf.buffer);
+    view.setUint32(0, boxSize);
+    buf.set(new TextEncoder().encode("ftyp"), 4);
+    buf.set(new TextEncoder().encode(majorBrand), 8);
+    view.setUint32(12, 0);
+    for (let i = 0; i < compatibleBrands.length; i++) {
+      buf.set(new TextEncoder().encode(compatibleBrands[i]), 16 + i * 4);
+    }
+    return buf;
+  }
+
+  function makeBmpHeader(dibSize: number): Uint8Array {
+    const buf = new Uint8Array(14 + dibSize);
+    buf[0] = 0x42; // 'B'
+    buf[1] = 0x4d; // 'M'
+    const view = new DataView(buf.buffer);
+    view.setUint32(2, buf.length, true);
+    view.setUint32(10, 14 + dibSize, true);
+    view.setUint32(14, dibSize, true);
+    return buf;
+  }
+
   it("detects a PNG signature", () => {
     const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const m = getMimeFromMagicBytes(png);
     expect(m?.mime).toBe("image/png");
     expect(m?.isImage).toBe(true);
+  });
+
+  describe("ftyp and AVIF detection", () => {
+    it("detects AVIF with major brand 'avif'", () => {
+      const bytes = makeFtypBox("avif", ["mif1"]);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "image/avif",
+        extension: "avif",
+        label: "AVIF image",
+        isImage: true,
+      });
+    });
+
+    it("detects AVIF with major brand 'avis'", () => {
+      const bytes = makeFtypBox("avis", ["msf1"]);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "image/avif",
+        extension: "avif",
+        label: "AVIF image",
+        isImage: true,
+      });
+    });
+
+    it("detects AVIF with compatible brand 'avif' when major brand is generic", () => {
+      const bytes = makeFtypBox("mif1", ["mif1", "miaf", "avif"]);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "image/avif",
+        extension: "avif",
+        label: "AVIF image",
+        isImage: true,
+      });
+    });
+
+    it("detects AVIF with compatible brand 'avis' when major brand is generic", () => {
+      const bytes = makeFtypBox("msf1", ["msf1", "avis"]);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "image/avif",
+        extension: "avif",
+        label: "AVIF image",
+        isImage: true,
+      });
+    });
+
+    it.each(["heic", "heix", "hevc"])("preserves HEIC detection for major brand %s", (brand) => {
+      const bytes = makeFtypBox(brand);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "image/heic",
+        extension: "heic",
+        label: "HEIC image",
+        isImage: true,
+      });
+    });
+
+    it.each(["mp42", "isom"])("preserves MP4 detection for major brand %s", (brand) => {
+      const bytes = makeFtypBox(brand, ["isom", brand]);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "video/mp4",
+        extension: "mp4",
+        label: "MP4 video",
+        isImage: false,
+      });
+    });
+
+    it("rejects invalid ftyp boxes whose length is inconsistent or corrupted", () => {
+      // 'ftyp' at bytes 4..7 but boxSize is 0
+      const invalidZero = new Uint8Array([0, 0, 0, 0, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66]);
+      expect(getMimeFromMagicBytes(invalidZero)).toBeNull();
+
+      // 'ftyp' at bytes 4..7 in text ("1234ftyp5678901234")
+      const textWithFtyp = new TextEncoder().encode("1234ftyp5678901234");
+      const m = getMimeFromMagicBytes(textWithFtyp);
+      expect(m?.mime).toBe("text/plain");
+    });
+  });
+
+  describe("SVG prolog variations", () => {
+    it("detects clean SVG root", () => {
+      const bytes = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>');
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "image/svg+xml",
+        extension: "svg",
+        label: "SVG image",
+        isImage: true,
+      });
+    });
+
+    it("detects self-closing SVG root", () => {
+      const bytes = new TextEncoder().encode("<svg/>");
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("detects SVG after leading whitespace", () => {
+      const bytes = new TextEncoder().encode("  \n\t  <svg viewBox=\"0 0 100 100\"><rect/></svg>");
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("detects SVG after XML declaration", () => {
+      const bytes = new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8"?>\n<svg width="10" height="10"></svg>');
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("detects SVG after DOCTYPE", () => {
+      const bytes = new TextEncoder().encode(
+        '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n<svg></svg>'
+      );
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("detects SVG after DOCTYPE with internal subset", () => {
+      const bytes = new TextEncoder().encode(
+        '<!DOCTYPE svg [\n  <!ENTITY brand "Toolbelt">\n]>\n<svg><text>&brand;</text></svg>'
+      );
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("detects SVG after comments", () => {
+      const bytes = new TextEncoder().encode(
+        '<!-- Generator: Adobe Illustrator 25.0.0, SVG Export Plug-In -->\n<!-- Second comment -->\n<svg></svg>'
+      );
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("detects SVG after combined whitespace, XML declaration, comments, and DOCTYPE", () => {
+      const bytes = new TextEncoder().encode(
+        '  \n<?xml version="1.0" encoding="utf-8"?>\n' +
+        '<!-- Created with Inkscape -->\n' +
+        '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
+        '<!-- Ready to render -->\n' +
+        '<svg viewBox="0 0 50 50"></svg>'
+      );
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("image/svg+xml");
+      expect(m?.isImage).toBe(true);
+    });
+
+    it("does not misclassify unrelated XML as SVG", () => {
+      const bytes = new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8"?>\n<note><to>Alice</to></note>');
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("application/xml");
+      expect(m?.isImage).toBe(false);
+    });
+
+    it("does not misclassify HTML with DOCTYPE as SVG", () => {
+      const bytes = new TextEncoder().encode('<!DOCTYPE html>\n<html><body><h1>Hello</h1></body></html>');
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("text/html");
+      expect(m?.isImage).toBe(false);
+    });
+
+    it("does not misclassify HTML with leading comments as SVG", () => {
+      const bytes = new TextEncoder().encode('<!-- HTML page comment -->\n<html><body><p>Content</p></body></html>');
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("text/html");
+      expect(m?.isImage).toBe(false);
+    });
+
+    it("does not misclassify HTML starting with <html> tag as SVG", () => {
+      const bytes = new TextEncoder().encode('<html><head><title>App</title></head><body><svg><circle/></svg></body></html>');
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("text/html");
+      expect(m?.isImage).toBe(false);
+    });
+  });
+
+  describe("BMP header validation vs ordinary text", () => {
+    it.each([12, 16, 40, 52, 56, 64, 108, 124])(
+      "recognizes plausible BMP with DIB header size %i",
+      (dibSize) => {
+        const bytes = makeBmpHeader(dibSize);
+        const m = getMimeFromMagicBytes(bytes);
+        expect(m).toEqual({
+          mime: "image/bmp",
+          extension: "bmp",
+          label: "BMP image",
+          isImage: true,
+        });
+      }
+    );
+
+    it("does not classify short text 'BM' as BMP", () => {
+      const bytes = new TextEncoder().encode("BM");
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).not.toBe("image/bmp");
+    });
+
+    it("does not classify ordinary text beginning with 'BM' as BMP", () => {
+      const texts = [
+        "BMW is a well-known German automotive brand.",
+        "BM: Today's sprint standup notes and action items.",
+        "BM1234567890abcdefghijklmnopqrstuvwxyz",
+      ];
+      for (const text of texts) {
+        const bytes = new TextEncoder().encode(text);
+        const m = getMimeFromMagicBytes(bytes);
+        expect(m?.mime).toBe("text/plain");
+        expect(m?.isImage).toBe(false);
+      }
+    });
+
+    it("rejects BM signature when DIB header size is non-standard", () => {
+      const bytes = makeBmpHeader(99);
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).not.toBe("image/bmp");
+    });
+  });
+
+  describe("JSON detection and size limits", () => {
+    it("recognizes small valid JSON documents", () => {
+      const bytes = new TextEncoder().encode(JSON.stringify({ greeting: "hello", count: 42 }));
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "application/json",
+        extension: "json",
+        label: "JSON document",
+        isImage: false,
+      });
+    });
+
+    it("recognizes valid JSON documents larger than 4096 bytes", () => {
+      const largeObject = {
+        title: "Large payload",
+        description: "x".repeat(3000),
+        items: Array.from({ length: 100 }, (_, i) => ({
+          id: i,
+          name: `item-name-${i}`,
+          data: "sample-data-chunk".repeat(5),
+        })),
+      };
+      const jsonStr = JSON.stringify(largeObject, null, 2);
+      const bytes = new TextEncoder().encode(jsonStr);
+      expect(bytes.length).toBeGreaterThan(4096);
+
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m).toEqual({
+        mime: "application/json",
+        extension: "json",
+        label: "JSON document",
+        isImage: false,
+      });
+    });
+
+    it("recognizes large JSON arrays exceeding 4096 bytes", () => {
+      const largeArray = Array.from({ length: 300 }, (_, i) => ({
+        index: i,
+        key: `field_${i}`,
+        value: "abcdefghijklmnopqrstuvwxyz",
+      }));
+      const bytes = new TextEncoder().encode(JSON.stringify(largeArray));
+      expect(bytes.length).toBeGreaterThan(4096);
+
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("application/json");
+    });
+
+    it("recognizes valid JSON with leading whitespace", () => {
+      const bytes = new TextEncoder().encode("   \n\t  {\"status\": \"ok\", \"code\": 200}");
+      const m = getMimeFromMagicBytes(bytes);
+      expect(m?.mime).toBe("application/json");
+    });
+
+    it("does not classify truncated JSON documents as valid JSON", () => {
+      const valid = JSON.stringify({ key: "v".repeat(5000), tail: 123 });
+      const truncated = new TextEncoder().encode(valid.slice(0, 4500));
+      expect(truncated.length).toBeGreaterThan(4096);
+
+      const m = getMimeFromMagicBytes(truncated);
+      expect(m?.mime).not.toBe("application/json");
+    });
+
+    it("does not classify small truncated JSON as valid JSON", () => {
+      const truncated = new TextEncoder().encode('{"incomplete": true, ');
+      const m = getMimeFromMagicBytes(truncated);
+      expect(m?.mime).not.toBe("application/json");
+    });
+
+    it("skips JSON parsing on documents exceeding the 1 MiB size cap", () => {
+      // 1 MiB + 64 bytes
+      const hugeBytes = new Uint8Array(1024 * 1024 + 64);
+      hugeBytes[0] = 0x7b; // '{'
+      hugeBytes[hugeBytes.length - 1] = 0x7d; // '}'
+      hugeBytes.fill(0x20, 1, hugeBytes.length - 1); // fill with spaces
+      const m = getMimeFromMagicBytes(hugeBytes);
+      expect(m?.mime).not.toBe("application/json");
+    });
   });
 });

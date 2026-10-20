@@ -96,6 +96,68 @@ export interface MagicMatch {
   isImage: boolean;
 }
 
+function isSvgContent(bytes: Uint8Array): boolean {
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8").decode(bytes.subarray(0, Math.min(bytes.length, 65536)));
+  } catch {
+    return false;
+  }
+
+  let pos = 0;
+  const len = text.length;
+
+  while (pos < len) {
+    while (pos < len && (/\s/.test(text[pos]) || text.charCodeAt(pos) === 0xfeff)) {
+      pos++;
+    }
+    if (pos >= len) break;
+
+    if (text.startsWith("<!--", pos)) {
+      const end = text.indexOf("-->", pos + 4);
+      if (end === -1) return false;
+      pos = end + 3;
+      continue;
+    }
+
+    if (text.startsWith("<?", pos)) {
+      const end = text.indexOf("?>", pos + 2);
+      if (end === -1) return false;
+      pos = end + 2;
+      continue;
+    }
+
+    if (text.slice(pos, pos + 9).toUpperCase() === "<!DOCTYPE") {
+      let idx = pos + 9;
+      let inBracket = false;
+      let quote: string | null = null;
+      while (idx < len) {
+        const ch = text[idx];
+        if (quote) {
+          if (ch === quote) quote = null;
+        } else if (ch === '"' || ch === "'") {
+          quote = ch;
+        } else if (ch === "[") {
+          inBracket = true;
+        } else if (ch === "]") {
+          inBracket = false;
+        } else if (ch === ">" && !inBracket) {
+          idx++;
+          break;
+        }
+        idx++;
+      }
+      pos = idx;
+      continue;
+    }
+
+    break;
+  }
+
+  const rest = text.slice(pos);
+  return /^<(?:svg|svg:svg)[\s>/]/i.test(rest) || /^<(?:svg|svg:svg)$/i.test(rest);
+}
+
 export function getMimeFromMagicBytes(bytes: Uint8Array): MagicMatch | null {
   if (bytes.length < 4) return null;
   const b = bytes;
@@ -105,8 +167,21 @@ export function getMimeFromMagicBytes(bytes: Uint8Array): MagicMatch | null {
     return { mime: "image/jpeg", extension: "jpg", label: "JPEG image", isImage: true };
   if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38)
     return { mime: "image/gif", extension: "gif", label: "GIF image", isImage: true };
-  if (b[0] === 0x42 && b[1] === 0x4d)
-    return { mime: "image/bmp", extension: "bmp", label: "BMP image", isImage: true };
+  if (b.length >= 18 && b[0] === 0x42 && b[1] === 0x4d) {
+    const dibSize = (b[14] | (b[15] << 8) | (b[16] << 16) | (b[17] << 24)) >>> 0;
+    if (
+      dibSize === 12 ||
+      dibSize === 16 ||
+      dibSize === 40 ||
+      dibSize === 52 ||
+      dibSize === 56 ||
+      dibSize === 64 ||
+      dibSize === 108 ||
+      dibSize === 124
+    ) {
+      return { mime: "image/bmp", extension: "bmp", label: "BMP image", isImage: true };
+    }
+  }
   if (b[0] === 0x00 && b[1] === 0x00 && b[2] === 0x01 && b[3] === 0x00)
     return { mime: "image/x-icon", extension: "ico", label: "ICO image", isImage: true };
   if (b[0] === 0x49 && b[1] === 0x49 && b[2] === 0x2a && b[3] === 0x00)
@@ -118,10 +193,26 @@ export function getMimeFromMagicBytes(bytes: Uint8Array): MagicMatch | null {
   if (b.length >= 12 && b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x41 && b[10] === 0x56 && b[11] === 0x45)
     return { mime: "audio/wav", extension: "wav", label: "WAV audio", isImage: false };
   if (b.length >= 12 && b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) {
-    const brand = String.fromCharCode(b[8], b[9], b[10], b[11]);
-    if (brand.startsWith("heic") || brand.startsWith("heix") || brand.startsWith("hevc"))
-      return { mime: "image/heic", extension: "heic", label: "HEIC image", isImage: true };
-    return { mime: "video/mp4", extension: "mp4", label: "MP4 video", isImage: false };
+    const boxSize = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+    if (boxSize >= 12 && boxSize <= b.length && boxSize % 4 === 0) {
+      const majorBrand = String.fromCharCode(b[8], b[9], b[10], b[11]);
+      let isAvif = majorBrand === "avif" || majorBrand === "avis";
+      if (!isAvif) {
+        for (let i = 16; i + 4 <= boxSize; i += 4) {
+          const compBrand = String.fromCharCode(b[i], b[i + 1], b[i + 2], b[i + 3]);
+          if (compBrand === "avif" || compBrand === "avis") {
+            isAvif = true;
+            break;
+          }
+        }
+      }
+      if (isAvif) {
+        return { mime: "image/avif", extension: "avif", label: "AVIF image", isImage: true };
+      }
+      if (majorBrand.startsWith("heic") || majorBrand.startsWith("heix") || majorBrand.startsWith("hevc"))
+        return { mime: "image/heic", extension: "heic", label: "HEIC image", isImage: true };
+      return { mime: "video/mp4", extension: "mp4", label: "MP4 video", isImage: false };
+    }
   }
   if (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33)
     return { mime: "audio/mpeg", extension: "mp3", label: "MP3 audio", isImage: false };
@@ -138,20 +229,28 @@ export function getMimeFromMagicBytes(bytes: Uint8Array): MagicMatch | null {
   }
   if (b[0] === 0x1f && b[1] === 0x8b)
     return { mime: "application/gzip", extension: "gz", label: "Gzip archive", isImage: false };
+  if (isSvgContent(b))
+    return { mime: "image/svg+xml", extension: "svg", label: "SVG image", isImage: true };
   if (b.length >= 5 && b[0] === 0x3c && b[1] === 0x3f && b[2] === 0x78 && b[3] === 0x6d && b[4] === 0x6c)
     return { mime: "application/xml", extension: "xml", label: "XML document", isImage: false };
   if (b.length >= 5 && b[0] === 0x3c && (b[1] === 0x21 || b[1] === 0x68 || b[1] === 0x48))
     return { mime: "text/html", extension: "html", label: "HTML document", isImage: false };
-  if (b[0] === 0x7b || b[0] === 0x5b) {
+  let firstNonWs = -1;
+  for (let i = 0; i < Math.min(b.length, 1024); i++) {
+    const c = b[i];
+    if (c !== 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d) {
+      firstNonWs = c;
+      break;
+    }
+  }
+  if ((firstNonWs === 0x7b || firstNonWs === 0x5b) && b.length <= 1024 * 1024) {
     try {
-      JSON.parse(new TextDecoder().decode(bytes.subarray(0, Math.min(bytes.length, 4096))));
+      JSON.parse(new TextDecoder().decode(bytes));
       return { mime: "application/json", extension: "json", label: "JSON document", isImage: false };
     } catch {
       /* not valid JSON */
     }
   }
-  if (b.length >= 5 && b[0] === 0x3c && b[1] === 0x73 && b[2] === 0x76 && b[3] === 0x67)
-    return { mime: "image/svg+xml", extension: "svg", label: "SVG image", isImage: true };
   // Heuristic for plain UTF-8 text
   let textScore = 0;
   for (let i = 0; i < Math.min(200, b.length); i++) {
