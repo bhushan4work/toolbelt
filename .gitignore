@@ -60,3 +60,6 @@ generated/
 # local tooling notes
 CLAUDE.md
 AGENTS.md
+
+# lighthouse ci reports
+.lighthouseci/
