@@ -66,8 +66,8 @@ export const GUIDES: Guide[] = [
     ogTitle: "How to Format and Validate JSON - CODERCOPS Guides",
     ogDescription:
       "Learn how to format, validate, and convert JSON documents locally with syntax highlighting, error detection, and lossless precision.",
-    publishedAt: "2026-10-15",
-    updatedAt: "2026-10-22",
+    publishedAt: "2026-10-23",
+    updatedAt: "2026-10-23",
     readingTime: "4 min read",
     totalTime: "PT4M",
     steps: [
@@ -83,12 +83,12 @@ export const GUIDES: Guide[] = [
       },
       {
         name: "Format with custom indentation or minify",
-        text: "Select your preferred indentation level (2 spaces, 4 spaces, or tabs) to pretty-print the document, or use Minify to strip all superfluous whitespace for production transport.",
+        text: "Choose 2-space or 4-space indentation to pretty-print the document, or use Minify to strip all superfluous whitespace for production transport.",
         url: "#step-3",
       },
       {
         name: "Explore the collapsible tree view",
-        text: "Switch to the Tree view to interactively inspect deep object hierarchies, search nested keys, and preserve high-precision numbers with lossless parsing.",
+        text: "Switch to the Tree view to interactively inspect deep object hierarchies, expand or collapse nested nodes, and preserve high-precision numbers with lossless parsing.",
         url: "#step-4",
       },
       {
@@ -103,8 +103,12 @@ export const GUIDES: Guide[] = [
         a: "It is safe only if the tool runs 100% client-side. CODERCOPS JSON Formatter performs all parsing, validation, and conversion directly within your browser. No payloads are ever uploaded to a remote server.",
       },
       {
-        q: "Why does valid JSON fail in some validators?",
-        a: "Common culprits include unquoted object keys, single quotes instead of standard double quotes, trailing commas after the last element, or numeric overflow on integers larger than 2^53 - 1.",
+        q: "Why won't my JSON parse?",
+        a: "JSON parsing fails on syntax errors such as unquoted object keys, single-quoted strings, or trailing commas after the last element. JSON requires double-quoted keys and strings, and does not allow trailing commas.",
+      },
+      {
+        q: "Why do large integers change value?",
+        a: "Large integers can parse successfully but lose precision once they exceed JavaScript's safe integer range (9,007,199,254,740,991). The formatter's lossless mode preserves the exact digits of 64-bit IDs and other high-precision numbers instead of rounding them.",
       },
       {
         q: "How can I convert JSON to TypeScript types?",
