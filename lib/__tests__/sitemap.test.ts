@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import sitemap, { getSitemapDates, getUrlLastModified } from "@/app/sitemap";
 import { SITE_URL, TOOLS, type Tool } from "@/lib/tools";
+import { GUIDES } from "@/lib/guides";
 import { SITE_PUBLISHED } from "@/lib/jsonLd";
 
 describe("sitemap", () => {
@@ -21,7 +22,7 @@ describe("sitemap", () => {
     }
   });
 
-  it("includes the homepage and all registered tools", () => {
+  it("includes the homepage, all registered tools, and guides", () => {
     const entries = sitemap();
     const urls = entries.map((e) => e.url);
 
@@ -29,7 +30,11 @@ describe("sitemap", () => {
     for (const tool of TOOLS) {
       expect(urls).toContain(`${SITE_URL}${tool.path}`);
     }
-    expect(entries).toHaveLength(TOOLS.length + 1);
+    expect(urls).toContain(`${SITE_URL}/guides`);
+    for (const guide of GUIDES) {
+      expect(urls).toContain(`${SITE_URL}${guide.path}`);
+    }
+    expect(entries).toHaveLength(TOOLS.length + GUIDES.length + 2);
   });
 
   it("assigns distinct lastModified dates to URLs from build metadata", () => {

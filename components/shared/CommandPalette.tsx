@@ -13,6 +13,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Search, ArrowRight, Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { TOOLS } from "@/lib/tools";
+import { GUIDES } from "@/lib/guides";
 import { cn } from "@/lib/cn";
 import { usePlatform } from "@/lib/platform";
 
@@ -117,6 +118,22 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
         hint: t.path,
         keywords: `${t.slug} ${t.tagline} ${t.features.join(" ")}`.toLowerCase(),
         run: () => router.push(t.path),
+      })),
+      {
+        id: "nav:guides",
+        section: "Navigation",
+        title: "Go to Guides",
+        hint: "/guides",
+        keywords: "guides tutorials walkthroughs docs",
+        run: () => router.push("/guides"),
+      },
+      ...GUIDES.map((g) => ({
+        id: `nav:guide:${g.slug}`,
+        section: "Guides",
+        title: g.title,
+        hint: g.path,
+        keywords: `${g.slug} ${g.tagline} ${g.tags.join(" ")}`.toLowerCase(),
+        run: () => router.push(g.path),
       })),
     ];
     const system: Command[] = [

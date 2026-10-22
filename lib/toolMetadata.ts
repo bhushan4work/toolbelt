@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_URL, type Tool } from "./tools";
+import type { Guide } from "./guides";
 
 // Builds the per-tool Next Metadata from a manifest entry, so every tool page's
 // metadata block is identical in shape and can never drift. The JSON-LD builders
@@ -13,6 +14,46 @@ export function generateToolMetadata(tool: Tool): Metadata {
     openGraph: {
       title: tool.ogTitle,
       description: tool.ogDescription,
+      url,
+      type: "website",
+      siteName: "CODERCOPS Tools",
+      locale: "en_US",
+    },
+  };
+}
+
+// Builds the per-guide Next Metadata from a guide registry entry.
+export function generateGuideMetadata(guide: Guide): Metadata {
+  const url = `${SITE_URL}${guide.path}`;
+  return {
+    title: guide.metaTitle,
+    description: guide.metaDescription,
+    alternates: { canonical: url },
+    openGraph: {
+      title: guide.ogTitle,
+      description: guide.ogDescription,
+      url,
+      type: "article",
+      publishedTime: guide.publishedAt,
+      modifiedTime: guide.updatedAt ?? guide.publishedAt,
+      siteName: "CODERCOPS Tools",
+      locale: "en_US",
+    },
+  };
+}
+
+// Builds Next Metadata for the guides index page.
+export function generateGuidesIndexMetadata(): Metadata {
+  const url = `${SITE_URL}/guides`;
+  return {
+    title: "Developer Guides & Walkthroughs - CODERCOPS Tools",
+    description:
+      "Practical developer guides, step-by-step walkthroughs, and tutorials for web utilities, formatting, security, and data conversions.",
+    alternates: { canonical: url },
+    openGraph: {
+      title: "Developer Guides & Walkthroughs - CODERCOPS Tools",
+      description:
+        "Practical developer guides, step-by-step walkthroughs, and tutorials for web utilities, formatting, security, and data conversions.",
       url,
       type: "website",
       siteName: "CODERCOPS Tools",

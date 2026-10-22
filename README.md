@@ -115,13 +115,23 @@ The tool set is a single typed registry in [`lib/tools.ts`](lib/tools.ts). The h
 2. Create `app/(tools)/<slug>/page.tsx` (metadata plus your client component), its `<Name>Client.tsx`, and an `opengraph-image.tsx` (a few lines that pass the registry entry to the shared renderer).
 3. Put pure logic in `lib/` and cover it with a test in `lib/__tests__/`.
 
+## Add a guide
+
+The guides collection is a single typed registry in [`lib/guides.ts`](lib/guides.ts). The guides index, per-guide metadata, JSON-LD (Article, HowTo, BreadcrumbList), social share images, and sitemap all derive from it. To add a guide:
+
+1. Add an entry to the `GUIDES` array in `lib/guides.ts`.
+2. Create `app/guides/<slug>/page.tsx` (metadata plus your guide content) and an `opengraph-image.tsx` (a few lines that pass the registry entry to the shared `renderGuideOgImage`).
+3. Add a test in `lib/__tests__/guides.test.ts` to ensure metadata, routes, and structured-data invariants hold.
+
 ## Project layout
 
 ```
 app/                 shell (layout, error/not-found boundaries, metadata routes)
 app/(tools)/         one route per tool, sharing a layout and ToolPageLayout
+app/guides/          guides index and walkthroughs
 components/shared/   header, theme, toasts, command palette, reusable UI
 lib/                 pure per-tool logic (parsing, crypto, PDF, conversions), unit-tested
+lib/guides.ts        the guides registry (single source of truth for guides)
 lib/tools.ts         the tool registry (single source of truth)
 lib/jsonLd.ts        schema.org builders derived from the registry
 lib/og.tsx           the shared Open Graph card renderer

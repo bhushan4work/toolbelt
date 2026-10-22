@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { NOTO_SANS_BOLD, NOTO_SANS_REGULAR } from "@/generated/og-fonts";
 import type { Tool } from "./tools";
+import type { Guide } from "./guides";
 
 // Shared social-card renderer. Every page's opengraph-image route derives its
 // card from here, so the brand, typography, and layout are identical and can
@@ -198,6 +199,34 @@ export function renderToolOgImage(tool: Tool) {
     url: `tools.codercops.com${tool.path}`,
     accent: a,
     accentBars: [`${a}ff`, `${a}b3`, `${a}73`, `${a}40`],
+  });
+}
+
+/** Social card for a guide page, driven entirely by its registry entry. */
+export function renderGuideOgImage(guide: Guide) {
+  const a = guide.accentHex;
+  return render({
+    badge: (guide.tagline || "GUIDE").toUpperCase(),
+    title: guide.title,
+    description: safe(guide.ogDescription),
+    chips: guide.tags.map(safe),
+    url: `tools.codercops.com${guide.path}`,
+    accent: a,
+    accentBars: [`${a}ff`, `${a}b3`, `${a}73`, `${a}40`],
+  });
+}
+
+/** Social card for the guides index page. */
+export function renderGuidesIndexOgImage() {
+  return render({
+    badge: "GUIDES",
+    title: "Developer Guides & Walkthroughs",
+    description:
+      "Practical developer guides, step-by-step walkthroughs, and tutorials for web utilities and developer tools.",
+    chips: ["Walkthroughs", "How-To", "Best Practices", "Free"],
+    url: "tools.codercops.com/guides",
+    accent: "#5AB5FF",
+    accentBars: ["#5AB5FF", "#9E7BFF", "#FFB547", "#A6F36B"],
   });
 }
 
