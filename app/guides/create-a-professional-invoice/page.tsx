@@ -6,7 +6,6 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  FileText,
   ShieldCheck,
 } from "lucide-react";
 import { getGuide } from "@/lib/guides";
@@ -18,6 +17,7 @@ import {
   guideFaqJsonLd,
 } from "@/lib/jsonLd";
 import { Faq } from "@/components/shared/Faq";
+import { GuideToolCta } from "@/components/shared/GuideToolCta";
 
 const guide = getGuide("create-a-professional-invoice")!;
 
@@ -152,27 +152,7 @@ export default function CreateProfessionalInvoiceGuidePage() {
           </p>
 
           {/* Interactive tool banner */}
-          <div className="mt-6 p-4 rounded-lg border border-[var(--hairline-strong)] bg-[var(--bg-raise)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded border border-[var(--hairline-strong)] bg-[var(--bg-base)] flex items-center justify-center text-[var(--green)]">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-display text-sm font-semibold text-[var(--fg)]">
-                  Use the Free Invoice Generator
-                </div>
-                <div className="text-xs text-[var(--fg-muted)]">
-                  Fill in the details, preview the invoice, and download a PDF. Everything stays in your browser.
-                </div>
-              </div>
-            </div>
-            <Link
-              href="/invoice-generator"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded text-xs font-mono font-medium bg-[var(--green)] text-black hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              Open Tool <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <GuideToolCta guide={guide} />
         </header>
 
         {/* Guide Content */}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Calendar, Clock } from "lucide-react";
 import { Faq } from "@/components/shared/Faq";
+import { GuideToolCta } from "@/components/shared/GuideToolCta";
 import { getGuide, getRelatedGuides } from "@/lib/guides";
 import { generateGuideMetadata } from "@/lib/toolMetadata";
 import { guideArticleJsonLd, guideBreadcrumbJsonLd, guideFaqJsonLd, guideHowToJsonLd } from "@/lib/jsonLd";
@@ -31,10 +32,7 @@ export default function UrlEncodeStringGuidePage() {
           </div>
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[var(--fg)] leading-tight">{guide.title}</h1>
           <p className="mt-4 text-[16px] text-[var(--fg-muted)] leading-relaxed">{guide.cardDescription}</p>
-          <div className="mt-6 p-4 rounded-lg border border-[var(--hairline-strong)] bg-[var(--bg-raise)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div><div className="font-display text-sm font-semibold text-[var(--fg)]">Encode or decode locally</div><div className="text-xs text-[var(--fg-muted)]">The URL Encoder supports components, full URLs, and form-style plus signs.</div></div>
-            <Link href="/url-encoder" className="inline-flex items-center gap-2 px-4 py-2 rounded text-xs font-mono font-medium bg-[var(--cyan)] text-black hover:opacity-90">Open URL Encoder <ArrowRight className="w-3.5 h-3.5" /></Link>
-          </div>
+          <GuideToolCta guide={guide} />
         </header>
 
         <div className="space-y-12 text-[15px] text-[var(--fg-muted)] leading-relaxed">
