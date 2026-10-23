@@ -329,6 +329,7 @@ export function TextTab() {
             <span className="font-mono text-[10.5px] tracking-[0.22em] uppercase text-[var(--fg-dim)] flex items-center gap-1.5">
               <FileCode className="w-3 h-3" />
               Copy as code literal
+              {!showLang && <span aria-hidden="true">click to expand</span>}
             </span>
           </button>
           {showLang && (

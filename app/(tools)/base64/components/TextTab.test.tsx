@@ -125,8 +125,10 @@ describe("TextTab code-literal disclosure", () => {
     const toggle = await screen.findByRole("button", { name: "Copy as code literal" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(toggle).toHaveAttribute("aria-controls", "base64-code-literal-panel");
+    expect(screen.getByText("click to expand")).toHaveAttribute("aria-hidden", "true");
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByText("click to expand")).not.toBeInTheDocument();
     const panel = document.getElementById("base64-code-literal-panel");
     expect(panel).toBeInTheDocument();
     expect(toggle).toHaveAttribute("aria-controls", panel?.id);
