@@ -35,9 +35,11 @@ function parseSyntaxError(raw: string, err: unknown): JsonError {
   const msg = err instanceof Error ? err.message : String(err);
   const posMatch = msg.match(/position (\d+)/i);
   const lineMatch = msg.match(/line (\d+) column (\d+)/i);
+
   let line = 1;
   let column = 1;
   let position = 0;
+
   if (posMatch) {
     position = parseInt(posMatch[1], 10);
     const lc = computeLineCol(raw, position);
@@ -46,11 +48,26 @@ function parseSyntaxError(raw: string, err: unknown): JsonError {
   } else if (lineMatch) {
     line = parseInt(lineMatch[1], 10);
     column = parseInt(lineMatch[2], 10);
+  } else {
+    try {
+      llParse(raw);
+    } catch (llError) {
+      if (llError instanceof Error) {
+        const llPosMatch = llError.message.match(/position (\d+)/i);
+        if (llPosMatch) {
+          position = parseInt(llPosMatch[1], 10);
+          const lc = computeLineCol(raw, position);
+          line = lc.line;
+          column = lc.column;
+        }
+      }
+    }
   }
+
   const suggestion = suggestFix(raw);
   return { message: msg.replace(/in JSON.*$/, "").trim() || "Invalid JSON", line, column, position, suggestion };
 }
-
+ 
 export function validate(raw: string): Result<true> {
   if (!raw.trim()) {
     return {
@@ -60,10 +77,18 @@ export function validate(raw: string): Result<true> {
   }
   try {
     JSON.parse(raw);
-    return { ok: true, value: true };
   } catch (e) {
     return { ok: false, error: parseSyntaxError(raw, e) };
   }
+  // `JSON.parse` silently keeps the last value of a duplicate key, but the
+  // lossless parser every conversion relies on rejects it. Detect it here so
+  // the conversions surface a friendly error instead of crashing the tool.
+  try {
+    llParse(raw);
+  } catch (e) {
+    return { ok: false, error: parseSyntaxError(raw, e) };
+  }
+  return { ok: true, value: true };
 }
 
 export function format(raw: string, indent: 2 | 4 = 2): Result<string> {
@@ -144,7 +169,9 @@ export function toCSV(raw: string): Result<string> {
   }
   const lines = [headers.map(escapeCsv).join(",")];
   for (const row of parsed as Record<string, unknown>[]) {
-    lines.push(headers.map((h) => escapeCsv(row?.[h as string])).join(","));
+    lines.push(headers.map((h) => escapeCsv(
+      row && typeof row === "object" && Object.hasOwn(row, h) ? row[h] : undefined
+    )).join(","));
   }
   return { ok: true, value: lines.join("\n") };
 }
@@ -157,12 +184,14 @@ type TsType =
   | { kind: "union"; of: TsType[] };
 
 function pascalCase(s: string): string {
-  return s
-    .replace(/[^A-Za-z0-9]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join("") || "Item";
+  const result =
+    s
+      .replace(/[^A-Za-z0-9]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join("") || "Item";
+  return /^[0-9]/.test(result) ? `_${result}` : result;
 }
 
 function singularize(name: string): string {
@@ -185,37 +214,42 @@ function normalize(t: TsType): unknown {
 }
 
 function mergeTypes(types: TsType[]): TsType {
-  const unique: TsType[] = [];
-  for (const t of types) if (!unique.some((u) => typesEqual(u, t))) unique.push(t);
-  if (unique.length === 1) return unique[0];
-  // Merge objects if all unique are objects
-  if (unique.every((u) => u.kind === "object")) {
-    const merged = mergeObjects(unique as Extract<TsType, { kind: "object" }>[]);
-    return merged;
+  const flat = types.flatMap((t) => (t.kind === "union" ? t.of : [t]));
+  const objects = flat.filter((t) => t.kind === "object") as Extract<TsType, { kind: "object" }>[];
+  const arrays = flat.filter((t) => t.kind === "array") as Extract<TsType, { kind: "array" }>[];
+  const merged: TsType[] = [];
+  for (const t of flat) {
+    if (t === objects[0]) merged.push(objects.length > 1 ? mergeObjects(objects) : t);
+    else if (t === arrays[0]) merged.push(arrays.length > 1 ? { kind: "array", of: mergeTypes(arrays.map((x) => x.of)) } : t);
+    else if (t.kind !== "object" && t.kind !== "array" && !merged.some((u) => typesEqual(u, t))) merged.push(t);
   }
-  return { kind: "union", of: unique };
+  // `unknown` only comes from empty arrays, so another type next to it is the real one.
+  const known = merged.filter((t) => !(t.kind === "primitive" && t.name === "unknown"));
+  const result = known.length > 0 ? known : merged;
+  return result.length === 1 ? result[0] : { kind: "union", of: result };
 }
 
 function mergeObjects(objs: Extract<TsType, { kind: "object" }>[]): TsType {
-  const keyMap = new Map<string, { types: TsType[]; seenIn: number }>();
+  const keyMap = new Map<string, { types: TsType[]; seenIn: number; optional: boolean }>();
   objs.forEach((o) => {
     o.fields.forEach((f) => {
-      const entry = keyMap.get(f.key) ?? { types: [], seenIn: 0 };
+      const entry = keyMap.get(f.key) ?? { types: [], seenIn: 0, optional: false };
       entry.types.push(f.type);
       entry.seenIn++;
+      entry.optional ||= f.optional;
       keyMap.set(f.key, entry);
     });
   });
   const total = objs.length;
-  const fields = Array.from(keyMap.entries()).map(([key, { types, seenIn }]) => ({
+  const fields = Array.from(keyMap.entries()).map(([key, { types, seenIn, optional }]) => ({
     key,
     type: mergeTypes(types),
-    optional: seenIn < total,
+    optional: optional || seenIn < total,
   }));
   return { kind: "object", name: objs[0].name, fields };
 }
 
-function inferType(value: unknown, hint: string, interfaces: Map<string, Extract<TsType, { kind: "object" }>>): TsType {
+function inferType(value: unknown, hint: string): TsType {
   if (value === null) return { kind: "primitive", name: "null" };
   if (isLosslessNumber(value)) return { kind: "primitive", name: "number" };
   if (typeof value === "string") return { kind: "primitive", name: "string" };
@@ -224,27 +258,47 @@ function inferType(value: unknown, hint: string, interfaces: Map<string, Extract
   if (Array.isArray(value)) {
     if (value.length === 0) return { kind: "array", of: { kind: "primitive", name: "unknown" } };
     const itemHint = singularize(pascalCase(hint));
-    const itemTypes = value.map((v) => inferType(v, itemHint, interfaces));
+    const itemTypes = value.map((v) => inferType(v, itemHint));
     return { kind: "array", of: mergeTypes(itemTypes) };
   }
   if (typeof value === "object") {
-    const name = uniqueInterfaceName(pascalCase(hint), interfaces);
     const fields = Object.entries(value as Record<string, unknown>).map(([k, v]) => ({
       key: k,
-      type: inferType(v, k, interfaces),
+      type: inferType(v, k),
       optional: v === null || v === undefined,
     }));
-    const obj: Extract<TsType, { kind: "object" }> = { kind: "object", name, fields };
-    interfaces.set(name, obj);
-    return obj;
+    return { kind: "object", name: pascalCase(hint), fields };
   }
   return { kind: "primitive", name: "unknown" };
 }
 
-function uniqueInterfaceName(base: string, interfaces: Map<string, unknown>): string {
-  if (!interfaces.has(base)) return base;
+// Interfaces are named and collected only after array items are merged, so
+// each merged item type becomes one interface instead of one per item.
+function collectInterfaces(
+  t: TsType,
+  interfaces: Map<string, Extract<TsType, { kind: "object" }>>,
+  reserved?: Set<string>,
+): void {
+  if (t.kind === "array") return collectInterfaces(t.of, interfaces, reserved);
+  if (t.kind === "union") return t.of.forEach((u) => collectInterfaces(u, interfaces, reserved));
+  if (t.kind !== "object" || interfaces.get(t.name) === t) return;
+  // Claim the name before the fields so a parent keeps it over a same-named child,
+  // then re-insert so children are still rendered before their parent.
+  t.name = uniqueInterfaceName(t.name, interfaces, reserved);
+  interfaces.set(t.name, t);
+  t.fields.forEach((f) => collectInterfaces(f.type, interfaces, reserved));
+  interfaces.delete(t.name);
+  interfaces.set(t.name, t);
+}
+
+function uniqueInterfaceName(
+  base: string,
+  interfaces: Map<string, unknown>,
+  reserved?: Set<string>,
+): string {
+  if (!interfaces.has(base) && !reserved?.has(base)) return base;
   let i = 2;
-  while (interfaces.has(`${base}${i}`)) i++;
+  while (interfaces.has(`${base}${i}`) || reserved?.has(`${base}${i}`)) i++;
   return `${base}${i}`;
 }
 
@@ -270,7 +324,9 @@ export function toTypeScript(raw: string, rootName = "Root"): Result<string> {
   if (!v.ok) return v;
   const parsed = llParse(raw);
   const interfaces = new Map<string, Extract<TsType, { kind: "object" }>>();
-  const rootType = inferType(parsed, rootName, interfaces);
+  const rootType = inferType(parsed, rootName);
+  const reserved = rootType.kind !== "object" ? new Set([rootName]) : undefined;
+  collectInterfaces(rootType, interfaces, reserved);
 
   // Collect and dedupe interfaces — simple approach: render each once in insertion order
   const out: string[] = [];
@@ -293,29 +349,58 @@ export function toTypeScript(raw: string, rootName = "Root"): Result<string> {
 /* ------- YAML ------- */
 function needsQuote(s: string): boolean {
   if (s === "") return true;
+  if (s === "=" || s === "<<") return true;
   if (/^[\s-?:,\[\]{}#&*!|>'"%@`]/.test(s)) return true;
   if (/[\s:#]$/.test(s)) return true;
-  if (/^(true|false|null|yes|no|on|off|~)$/i.test(s)) return true;
+  if (/^(true|false|null|yes|no|on|off|y|n|~)$/i.test(s)) return true;
   if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) return true;
   if (/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s)) return true;
   if (/^[+-]?0([xX][0-9a-fA-F]+|[oO][0-7]+)$/.test(s)) return true;
+  if (/^[+-]?\d[\d_]*(?::[0-5]?\d[\d_]*)+(?:\.[\d_]*)?$/.test(s)) return true;
+  if (/^[+-]?(?:\d[\d_]*(?:\.[\d_]*)?|\.\d[\d_]*)(?:[eE][+-]?\d[\d_]*)?$/.test(s)) return true;
+  if (/^[+-]?0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*$/.test(s)) return true;
+  if (/^[+-]?0[bB][01_]+$/.test(s)) return true;
   if (/^[+-]?\.(inf|nan)$/i.test(s)) return true;
-  if (/^\d{4}-\d{2}-\d{2}(?:[Tt ].*)?$/.test(s)) return true;
+  if (/^\d{4}-\d{1,2}-\d{1,2}(?:[Tt ].*)?$/.test(s)) return true;
   if (/[:#]\s|\s#/.test(s)) return true;
-  if (/[\n\t\r"]/.test(s)) return true;
+  if (/[\x00-\x1f\x7f-\x9f\u2028\u2029\ufffe\uffff"]/.test(s)) return true;
   return false;
 }
 
 function yamlString(s: string): string {
   if (!needsQuote(s)) return s;
-  const escaped = s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\t/g, "\\t").replace(/\r/g, "\\r");
+  const escaped = s
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\t/g, "\\t")
+    .replace(/\r/g, "\\r")
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u2028\u2029\ufffe\uffff]/g, (c) => {
+      const code = c.charCodeAt(0);
+      return code < 0x100
+        ? `\\x${code.toString(16).toUpperCase().padStart(2, "0")}`
+        : `\\u${code.toString(16).toUpperCase().padStart(4, "0")}`;
+    });
   return `"${escaped}"`;
+}
+
+// YAML 1.1 parsers such as PyYAML only read a number with an exponent as a float
+// when it has a dot and a signed exponent ("1.0e+3"). "1e3" and "2e+5" load as
+// strings there, so add what's missing. Every other number is kept exactly as
+// written, so long values don't lose digits.
+const EXPONENT_NUMBER = /^(-?\d+)(\.\d+)?([eE])([+-]?)(\d+)$/;
+
+function yamlNumber(text: string): string {
+  const match = EXPONENT_NUMBER.exec(text);
+  if (!match) return text;
+  const [, whole, fraction = ".0", e, sign, exponent] = match;
+  return `${whole}${fraction}${e}${sign || "+"}${exponent}`;
 }
 
 function yamlValue(value: unknown, indent: number): string {
   const pad = "  ".repeat(indent);
   if (value === null) return "null";
-  if (isLosslessNumber(value)) return value.toString();
+  if (isLosslessNumber(value)) return yamlNumber(value.toString());
   if (typeof value === "boolean") return value ? "true" : "false";
   if (typeof value === "number") {
     if (!Number.isFinite(value)) return ".nan";
@@ -328,6 +413,7 @@ function yamlValue(value: unknown, indent: number): string {
       .map((item) => {
         if (isContainer(item)) {
           const rendered = yamlValue(item, indent + 1);
+          if (rendered === "[]" || rendered === "{}") return `${pad}- ${rendered}`;
           if (Array.isArray(item)) {
             return `${pad}-\n${rendered}`;
           }
@@ -451,10 +537,11 @@ export function sortKeys(raw: string, indent: 2 | 4 = 2): Result<string> {
   function walk(node: unknown): unknown {
     if (Array.isArray(node)) return node.map(walk);
     if (isContainer(node)) {
-      const keys = Object.keys(node as Record<string, unknown>).sort();
-      const out: Record<string, unknown> = {};
-      for (const k of keys) out[k] = walk((node as Record<string, unknown>)[k]);
-      return out;
+      const record = node as Record<string, unknown>;
+      const entries = Object.keys(record)
+        .sort()
+        .map((k) => [k, walk(record[k])] as [string, unknown]);
+      return Object.fromEntries(entries);
     }
     return node;
   }
@@ -518,14 +605,21 @@ function escapeXml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 function sanitizeTag(s: string): string {
-  return /^[A-Za-z_][\w.-]*$/.test(s) ? s : "item";
+  if (!s) return "item";
+  const cleaned = s.replace(/[^A-Za-z0-9_.-]/g, "_");
+  return /^[0-9.-]/.test(cleaned) ? `_${cleaned}` : cleaned;
 }
 
 export function toXML(raw: string, rootTag = "root"): Result<string> {
   const v = validate(raw);
   if (!v.ok) return v;
   const parsed = llParse(raw);
-  function render(node: unknown, tag: string, indent: number): string {
+  function render(
+    node: unknown,
+    tag: string,
+    indent: number,
+    parent: "root" | "object" | "array" = "root",
+  ): string {
     const pad = "  ".repeat(indent);
     if (node === null) return `${pad}<${tag} nil="true"/>`;
     if (isLosslessNumber(node)) return `${pad}<${tag}>${node.toString()}</${tag}>`;
@@ -533,13 +627,22 @@ export function toXML(raw: string, rootTag = "root"): Result<string> {
       const itemTag = sanitizeTag(
         tag.endsWith("s") && tag.length > 1 ? tag.slice(0, -1) : `${tag}Item`
       );
-      return node.map((item) => render(item, itemTag, indent)).join("\n");
+      if (node.length === 0) return `${pad}<${tag}/>`;
+      if (parent === "object") {
+        return node
+          .map((item) => render(item, itemTag, indent, "array"))
+          .join("\n");
+      }
+      const inner = node
+        .map((item) => render(item, itemTag, indent + 1, "array"))
+        .join("\n");
+      return `${pad}<${tag}>\n${inner}\n${pad}</${tag}>`;
     }
     if (typeof node === "object") {
       const entries = Object.entries(node as Record<string, unknown>);
       if (entries.length === 0) return `${pad}<${tag}/>`;
       const inner = entries
-        .map(([k, v]) => render(v, sanitizeTag(k), indent + 1))
+        .map(([k, v]) => render(v, sanitizeTag(k), indent + 1, "object"))
         .join("\n");
       return `${pad}<${tag}>\n${inner}\n${pad}</${tag}>`;
     }
@@ -613,7 +716,7 @@ export function escapeForCode(raw: string, lang: EscapeLang): string {
       // Escape backticks and template literal expressions for safety in template strings
       return "`" + minified.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${") + "`";
     case "python":
-      return "'''" + minified.replace(/\\/g, "\\\\").replace(/'''/g, "'\\''") + "'''";
+      return "'''" + minified.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'''";
     case "go":
       return "`" + minified.replace(/`/g, "` + \"`\" + `") + "`";
     case "rust":

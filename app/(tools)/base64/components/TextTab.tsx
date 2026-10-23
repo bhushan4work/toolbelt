@@ -5,7 +5,8 @@ import { ArrowLeftRight, AlertCircle, Info, FileCode, Scissors, Archive } from "
 import {
   base64ToBytes,
   bytesToBase64,
-  detectBase64,
+  decodeUtf8Bytes,
+  detectBase64Text,
   formatBytes,
   gunzipBytes,
   gzipBytes,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/base64-utils";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { cn } from "@/lib/cn";
+import { formatModShiftKey, usePlatform } from "@/lib/platform";
 
 type Direction = "encode" | "decode";
 
@@ -23,6 +25,7 @@ type ChunkPreset = "none" | "mime76" | "pem64" | "email";
 const CHUNK_SIZES: Record<ChunkPreset, number> = { none: 0, mime76: 76, pem64: 64, email: 76 };
 
 export function TextTab() {
+  const { isMac } = usePlatform();
   const [direction, setDirection] = useState<Direction>("encode");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -78,12 +81,12 @@ export function TextTab() {
             return;
           }
         }
-        try {
-          const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-          setOutput(text);
+        const decoded = decodeUtf8Bytes(bytes);
+        if (decoded.ok) {
+          setOutput(decoded.value);
           setError(null);
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Decode failed");
+        } else {
+          setError(decoded.error);
           setOutput("");
         }
       }
@@ -98,7 +101,7 @@ export function TextTab() {
   function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
     if (direction === "encode") {
       const pasted = e.clipboardData.getData("text");
-      if (pasted && detectBase64(pasted)) {
+      if (pasted && detectBase64Text(pasted, { gzip })) {
         setAutoDetected(true);
         setDirection("decode");
         setTimeout(() => setAutoDetected(false), 4000);
@@ -107,6 +110,7 @@ export function TextTab() {
   }
 
   function swap() {
+    if (error || !output) return;
     setDirection((d) => (d === "encode" ? "decode" : "encode"));
     setInput(output);
     setOutput(input);
@@ -135,7 +139,7 @@ export function TextTab() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [direction, input, opts, urlSafe, padding]);
+  }, [direction, input, output, error, opts, urlSafe, padding, gzip, chunk]);
 
   const inputBytes = useMemo(() => new Blob([input]).size, [input]);
   const outputBytes = useMemo(() => new Blob([output]).size, [output]);
@@ -154,19 +158,29 @@ export function TextTab() {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="segmented">
-          <button data-active={direction === "encode"} onClick={() => setDirection("encode")}>
+        <div className="segmented" role="group" aria-label="Direction">
+          <button
+            type="button"
+            aria-pressed={direction === "encode"}
+            data-active={direction === "encode"}
+            onClick={() => setDirection("encode")}
+          >
             Text → Base64
           </button>
-          <button data-active={direction === "decode"} onClick={() => setDirection("decode")}>
+          <button
+            type="button"
+            aria-pressed={direction === "decode"}
+            data-active={direction === "decode"}
+            onClick={() => setDirection("decode")}
+          >
             Base64 → Text
           </button>
         </div>
-        <div className="segmented" aria-label="Base64 variant">
-          <button data-active={!urlSafe} onClick={() => setUrlSafe(false)}>
+        <div className="segmented" role="group" aria-label="Base64 variant">
+          <button type="button" aria-pressed={!urlSafe} data-active={!urlSafe} onClick={() => setUrlSafe(false)}>
             Standard
           </button>
-          <button data-active={urlSafe} onClick={() => setUrlSafe(true)}>
+          <button type="button" aria-pressed={urlSafe} data-active={urlSafe} onClick={() => setUrlSafe(true)}>
             URL-safe
           </button>
         </div>
@@ -264,8 +278,9 @@ export function TextTab() {
           <button
             type="button"
             onClick={swap}
+            disabled={Boolean(error) || !output}
             className="group w-11 h-11 rounded-full border border-[var(--hairline-strong)] bg-[var(--bg-raise)] flex items-center justify-center hover:border-[var(--cyan)] hover:shadow-[0_0_30px_-8px_rgba(0,229,199,0.6)] transition-all"
-            title="Swap direction (⌘⇧S)"
+            title={`Swap direction (${formatModShiftKey("S", isMac)})`}
             aria-label="Swap direction"
           >
             <ArrowLeftRight className="w-4 h-4 text-[var(--fg-muted)] group-hover:text-[var(--cyan)] group-hover:rotate-180 transition-all duration-500" />
@@ -280,7 +295,7 @@ export function TextTab() {
             <CopyButton value={output} disabled={!output} className="py-1" />
           </div>
           {error ? (
-            <div className="flex-1 p-4 flex items-start gap-2 text-[13px] text-[var(--rose)]">
+            <div role="alert" className="flex-1 p-4 flex items-start gap-2 text-[13px] text-[var(--rose)]">
               <AlertCircle className="w-4 h-4 mt-0.5" />
               <span>{error}</span>
             </div>

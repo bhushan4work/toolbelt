@@ -1,12 +1,17 @@
 // All schema.org JSON-LD builders in one place. Everything derives from the
-// TOOLS registry or SITE_URL, so the structured data can never drift from what
+// TOOLS/GUIDES registry or SITE_URL, so the structured data can never drift from what
 // the pages actually render. Emitted as inline <script type="application/ld+json">,
 // which is inert data (not executable JS), so the nonce CSP does not apply.
 
 import { SITE_URL, TOOLS, type Tool } from "./tools";
+import type { Guide } from "./guides";
 
 const ORG_ID = `${SITE_URL}/#organization`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
+
+// The initial public release. dateModified is the build date (BUILD_DATE is
+// set in next.config.js), not the request date, since pages render per request.
+export const SITE_PUBLISHED = "2026-07-08";
 
 // The publisher is CODERCOPS (the agency). Keyed by an @id on this domain so the
 // WebSite node can reference it. sameAs lists only identities we can honestly
@@ -31,6 +36,8 @@ export function toolJsonLd(tool: Tool) {
     operatingSystem: "Any (Browser)",
     description: tool.jsonLdDescription,
     url: `${SITE_URL}${tool.path}`,
+    inLanguage: "en",
+    isAccessibleForFree: true,
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     publisher: { "@type": "Organization", name: "CODERCOPS", url: "https://www.codercops.com" },
   };
@@ -53,7 +60,7 @@ export function breadcrumbJsonLd(tool: Tool) {
 
 // FAQPage. Only call this for tools that actually render an FAQ section
 // (tool.faqs.length > 0), so the markup is always a true representation of the
-// visible page. json-formatter has no FAQs and must not emit this.
+// visible page, including json-formatter's FAQs.
 export function faqJsonLd(tool: Tool) {
   return {
     "@context": "https://schema.org",
@@ -63,6 +70,107 @@ export function faqJsonLd(tool: Tool) {
       name: f.q,
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
+  };
+}
+
+// Article structured data for guides.
+export function guideArticleJsonLd(guide: Guide) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: guide.title,
+    description: guide.metaDescription,
+    url: `${SITE_URL}${guide.path}`,
+    datePublished: guide.publishedAt,
+    dateModified: guide.updatedAt ?? guide.publishedAt,
+    inLanguage: "en",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}${guide.path}`,
+    },
+    author: {
+      "@type": "Organization",
+      name: "CODERCOPS",
+      url: "https://www.codercops.com",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "CODERCOPS",
+      url: "https://www.codercops.com",
+    },
+  };
+}
+
+// HowTo structured data for walkthrough guides with discrete action steps.
+export function guideHowToJsonLd(guide: Guide) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: guide.title,
+    description: guide.metaDescription,
+    ...(guide.totalTime ? { totalTime: guide.totalTime } : {}),
+    step: guide.steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+      url: step.url
+        ? step.url.startsWith("http")
+          ? step.url
+          : `${SITE_URL}${guide.path}${step.url}`
+        : `${SITE_URL}${guide.path}#step-${index + 1}`,
+    })),
+  };
+}
+
+// BreadcrumbList for a guide page: Home > Guides > Guide Title.
+export function guideBreadcrumbJsonLd(guide: Guide) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Guides", item: `${SITE_URL}/guides` },
+      { "@type": "ListItem", position: 3, name: guide.title },
+    ],
+  };
+}
+
+// BreadcrumbList for the guides index page: Home > Guides.
+export function guidesIndexBreadcrumbJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Guides" },
+    ],
+  };
+}
+
+// FAQPage schema for guides with FAQs.
+export function guideFaqJsonLd(guide: Guide) {
+  if (!guide.faqs || guide.faqs.length === 0) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: guide.faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+}
+
+// CollectionPage for the guides index.
+export function guidesIndexJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Developer Guides",
+    description: "Practical developer guides, step-by-step walkthroughs, and tutorials for web utilities.",
+    url: `${SITE_URL}/guides`,
+    publisher: { "@type": "Organization", name: "CODERCOPS", url: "https://www.codercops.com" },
   };
 }
 
@@ -81,6 +189,8 @@ export function homeJsonLd() {
         name: "CODERCOPS Tools",
         description: "Free, fast, privacy-first developer tools that run entirely in your browser.",
         publisher: { "@id": ORG_ID },
+        datePublished: SITE_PUBLISHED,
+        dateModified: process.env.BUILD_DATE ?? SITE_PUBLISHED,
       },
       {
         "@type": "ItemList",

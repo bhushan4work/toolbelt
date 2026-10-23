@@ -22,6 +22,8 @@
   --violet: #9E7BFF;
   --sky: #5AB5FF;
   --lime: #A6F36B;
+  --green: #3FDD6B;
+  --fuchsia: #F26DF0;
 }
 
 [data-theme="light"] {
@@ -43,6 +45,8 @@
   --violet: #6D49D4;
   --sky: #1F70C7;
   --lime: #3C8F1E;
+  --green: #15773A;
+  --fuchsia: #A8249F;
 }
 
 [data-theme="light"] .tok-key { color: #1F70C7; }
@@ -221,6 +225,10 @@ kbd,
   background: rgba(255, 255, 255, 0.07);
   color: var(--fg);
   box-shadow: inset 0 0 0 1px var(--hairline-strong);
+}
+/* The white overlay above doesn't show on the light background, so the light theme uses a dark one. */
+[data-theme="light"] .segmented button[data-active="true"] {
+  background: rgba(10, 11, 15, 0.08);
 }
 
 /* Code / editor surfaces */

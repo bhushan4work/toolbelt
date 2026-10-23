@@ -5,8 +5,11 @@ import {
   verifyJwt,
   verifyWithJwks,
   computeHealth,
+  describeAlg,
+  isStandardClaim,
   securityAudit,
   uint8ToBase64Url,
+  relativeTime,
   SAMPLE_JWT,
   type DecodedJwt,
   type JwksKey,
@@ -160,6 +163,44 @@ describe("computeHealth expiry ordering", () => {
   });
 });
 
+describe("computeHealth with inherited property names", () => {
+  const decoded = (header: Record<string, unknown>, payload: Record<string, unknown>): DecodedJwt => ({
+    header,
+    payload,
+    signature: "sig",
+    raw: { header: "", payload: "", signature: "sig" },
+  });
+
+  it("counts __proto__ as a custom claim", () => {
+    // An object literal would not create an own "__proto__" key, so parse JSON.
+    const payload = JSON.parse('{"sub":"1","__proto__":{"a":1}}') as Record<string, unknown>;
+    const h = computeHealth(decoded({ alg: "HS256" }, payload));
+    expect(h.standardCount).toBe(1);
+    expect(h.customCount).toBe(1);
+  });
+
+  it("counts constructor as a custom claim", () => {
+    const h = computeHealth(decoded({ alg: "HS256" }, { constructor: "x" }));
+    expect(h.standardCount).toBe(0);
+    expect(h.customCount).toBe(1);
+  });
+
+  it.each(["__proto__", "constructor", "toString"])("reports an unknown algorithm for alg %s", (alg) => {
+    const h = computeHealth(decoded({ alg }, { sub: "1" }));
+    expect(h.algDesc).toBe("Unknown algorithm");
+  });
+});
+
+describe("isStandardClaim and describeAlg", () => {
+  it("only match names the maps define themselves", () => {
+    expect(isStandardClaim("sub")).toBe(true);
+    expect(isStandardClaim("__proto__")).toBe(false);
+    expect(isStandardClaim("constructor")).toBe(false);
+    expect(describeAlg("HS256")).toBe("HMAC using SHA-256");
+    expect(describeAlg("toString")).toBe("Unknown algorithm");
+  });
+});
+
 describe("securityAudit", () => {
   it("flags alg none as critical", () => {
     const findings = securityAudit(
@@ -167,5 +208,35 @@ describe("securityAudit", () => {
       false
     );
     expect(findings.some((f) => f.level === "critical")).toBe(true);
+  });
+});
+
+describe("relativeTime", () => {
+  const nowMs = 1_000_000_000_000;
+  const nowSec = nowMs / 1000;
+
+  it("rolls up 59.6 seconds to 1 minute", () => {
+    expect(relativeTime(nowSec - 59.6, nowMs)).toBe("1 minute ago");
+    expect(relativeTime(nowSec + 59.6, nowMs)).toBe("in 1 minute");
+  });
+
+  it("rolls up 59.5 minutes to 1 hour", () => {
+    expect(relativeTime(nowSec - 3570, nowMs)).toBe("1 hour ago");
+    expect(relativeTime(nowSec + 3570, nowMs)).toBe("in 1 hour");
+  });
+
+  it("rolls up 23.6 hours to 1 day", () => {
+    expect(relativeTime(nowSec - 23.6 * 3600, nowMs)).toBe("1 day ago");
+    expect(relativeTime(nowSec + 23.6 * 3600, nowMs)).toBe("in 1 day");
+  });
+
+  it("rolls up 29.6 days to 1 month", () => {
+    expect(relativeTime(nowSec - 29.6 * 86400, nowMs)).toBe("1 month ago");
+    expect(relativeTime(nowSec + 29.6 * 86400, nowMs)).toBe("in 1 month");
+  });
+
+  it("rolls up 360 days to 1 year", () => {
+    expect(relativeTime(nowSec - 360 * 86400, nowMs)).toBe("1 year ago");
+    expect(relativeTime(nowSec + 360 * 86400, nowMs)).toBe("in 1 year");
   });
 });

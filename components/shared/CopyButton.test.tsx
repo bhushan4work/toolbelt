@@ -1,0 +1,34 @@
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { CopyButton } from "./CopyButton";
+import { ToastProvider } from "./Toast";
+
+describe("CopyButton", () => {
+  const mockWriteText = vi.fn().mockResolvedValue(undefined);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: mockWriteText },
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  it("copies value to clipboard and shows Copied label", async () => {
+    render(
+      <ToastProvider>
+        <CopyButton value="hello-world" />
+      </ToastProvider>
+    );
+
+    const button = screen.getByRole("button", { name: "Copy" });
+    fireEvent.click(button);
+
+    expect(mockWriteText).toHaveBeenCalledWith("hello-world");
+
+    await waitFor(() => {
+      expect(screen.getByText("Copied")).toBeInTheDocument();
+    });
+  });
+});

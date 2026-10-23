@@ -6,6 +6,8 @@ import { Toolbar } from "./components/Toolbar";
 import { OutputPanel } from "./components/OutputPanel";
 import { ConversionPanel } from "./components/ConversionPanel";
 import { FindBar } from "./components/FindBar";
+import { FindHighlight } from "./components/FindHighlight";
+import { selectFindMatch, type FindMatch } from "./components/find-selection";
 import { DiffPanel } from "./components/DiffPanel";
 import { StatsBar } from "./components/StatsBar";
 import {
@@ -23,8 +25,10 @@ import { HistoryPanel, useHistory } from "@/components/shared/HistoryPanel";
 import { useRegisterCommands } from "@/components/shared/CommandPalette";
 import { downloadBlob } from "@/lib/download";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/lib/platform";
 
 export function JsonFormatterClient() {
+  const { modKey, shiftKey } = usePlatform();
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [indent, setIndent] = useState<2 | 4>(2);
@@ -40,6 +44,7 @@ export function JsonFormatterClient() {
   const [diffOpen, setDiffOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
+  const [findMatch, setFindMatch] = useState<FindMatch | null>(null);
   const [json5, setJson5] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -290,32 +295,34 @@ export function JsonFormatterClient() {
   useRegisterCommands(
     "json-formatter",
     [
-      { id: "json:format", section: "JSON Formatter", title: "Format", run: () => doFormat(), shortcut: ["⌘", "↵"] },
-      { id: "json:minify", section: "JSON Formatter", title: "Minify", run: doMinify, shortcut: ["⌘", "M"] },
+      { id: "json:format", section: "JSON Formatter", title: "Format", run: () => doFormat(), shortcut: [modKey, "↵"] },
+      { id: "json:minify", section: "JSON Formatter", title: "Minify", run: doMinify, shortcut: [modKey, "M"] },
       { id: "json:validate", section: "JSON Formatter", title: "Validate", run: doValidate },
-      { id: "json:sort", section: "JSON Formatter", title: "Sort keys alphabetically", run: doSort, shortcut: ["⌘", "⇧", "S"] },
+      { id: "json:sort", section: "JSON Formatter", title: "Sort keys alphabetically", run: doSort, shortcut: [modKey, shiftKey, "S"] },
       { id: "json:diff", section: "JSON Formatter", title: diffOpen ? "Close diff panel" : "Open diff panel", run: () => setDiffOpen((v) => !v) },
       { id: "json:stats", section: "JSON Formatter", title: statsOpen ? "Hide stats" : "Show stats", run: () => setStatsOpen((v) => !v) },
-      { id: "json:find", section: "JSON Formatter", title: "Find in input", run: () => setFindOpen(true), shortcut: ["⌘", "F"] },
+      { id: "json:find", section: "JSON Formatter", title: "Find in input", run: () => setFindOpen(true), shortcut: [modKey, "F"] },
       { id: "json:fetch", section: "JSON Formatter", title: "Fetch from URL", run: () => setUrlDialog(true) },
       { id: "json:sample", section: "JSON Formatter", title: "Load example", run: handleLoadSample },
-      { id: "json:download", section: "JSON Formatter", title: "Download as .json", run: handleDownload, shortcut: ["⌘", "D"] },
-      { id: "json:clear", section: "JSON Formatter", title: "Clear all", run: handleClear, shortcut: ["⌘", "K"] },
+      { id: "json:download", section: "JSON Formatter", title: "Download as .json", run: handleDownload, shortcut: [modKey, "D"] },
+      { id: "json:clear", section: "JSON Formatter", title: "Clear all", run: handleClear, shortcut: [modKey, shiftKey, "K"] },
     ],
-    [doFormat, doMinify, doValidate, doSort, diffOpen, statsOpen, handleDownload, handleLoadSample, handleClear]
+    [doFormat, doMinify, doValidate, doSort, diffOpen, statsOpen, handleDownload, handleLoadSample, handleClear, modKey, shiftKey]
   );
 
   // Scroll to find match
-  const findScrollTo = useCallback((pos: number) => {
+  const findScrollTo = useCallback((match: FindMatch | null) => {
+    setFindMatch(match);
     const el = inputRef.current;
-    if (!el) return;
-    el.focus();
-    el.setSelectionRange(pos, pos + 0);
-    // Compute approximate scroll: lines up to pos
-    const before = input.slice(0, pos).split("\n").length;
-    const lineHeight = 21.45;
-    el.scrollTop = Math.max(0, (before - 4) * lineHeight);
-  }, [input]);
+    if (!el || !match) return;
+    selectFindMatch(el, match.start, match.end);
+  }, []);
+
+  const closeFind = useCallback(() => {
+    setFindOpen(false);
+    setFindMatch(null);
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <>
@@ -422,25 +429,28 @@ export function JsonFormatterClient() {
               {findOpen && (
                 <FindBar
                   text={input}
-                  onClose={() => setFindOpen(false)}
+                  onClose={closeFind}
                   onScrollTo={findScrollTo}
                 />
               )}
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  if (error) setError(null);
-                }}
-                aria-label="JSON input"
-                placeholder={`Paste JSON here...\n\nTip: drop a .json file anywhere on the page, or paste a URL.`}
-                className="editor-input flex-1 px-4 py-3 bg-transparent"
-                spellCheck={false}
-                autoCapitalize="off"
-                autoCorrect="off"
-                style={{ minHeight: 400 }}
-              />
+              <div className="relative flex flex-1">
+                {findOpen && <FindHighlight editorRef={inputRef} text={input} match={findMatch} />}
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  aria-label="JSON input"
+                  placeholder={`Paste JSON here...\n\nTip: drop a .json file anywhere on the page, or paste a URL.`}
+                  className="editor-input relative flex-1 px-4 py-3 bg-transparent"
+                  spellCheck={false}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  style={{ minHeight: 400 }}
+                />
+              </div>
             </div>
           </div>
 
@@ -457,7 +467,7 @@ export function JsonFormatterClient() {
 
         <div className="mt-4">
           <HistoryPanel
-            storageKey="json-formatter"
+            history={history}
             onSelect={(v) => {
               setInput(v);
               const r = format(v, indent);

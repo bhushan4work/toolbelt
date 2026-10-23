@@ -2,8 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   computeTotals,
   currencyMinorDigits,
+  DEFAULT_SENDER,
+  emptyInvoice,
   roundTo,
   nextInvoiceNumber,
+  placeholderInvoice,
   type Invoice,
   type LineItem,
 } from "../invoice-types";
@@ -11,6 +14,30 @@ import {
 function items(...pairs: [number, number][]): LineItem[] {
   return pairs.map(([rate, qty], i) => ({ id: `i${i}`, description: "", rate, qty }));
 }
+
+describe("roundTo", () => {
+  it("rounds half away from zero for negative numbers", () => {
+    expect(roundTo(-2.175, 2)).toBe(-2.18);
+  });
+
+  it("handles standard issue examples correctly", () => {
+    expect(roundTo(1.45 * 1.5, 2)).toBe(2.18);
+    expect(roundTo(16.45 * 1.5, 2)).toBe(24.68);
+  });
+
+  it("matches integer cent math across 60,000 rate/quantity combinations", () => {
+    const qtys = [0.5, 1.5, 2.5];
+    for (let rateCents = 1; rateCents <= 20000; rateCents++) {
+      const rate = rateCents / 100;
+      for (const qty of qtys) {
+        const expectedCents = Math.round(rateCents * qty);
+        const expected = expectedCents / 100;
+        const actual = roundTo(rate * qty, 2);
+        expect(actual).toBe(expected);
+      }
+    }
+  });
+});
 
 describe("computeTotals rounding", () => {
   it("rounds so subtotal, tax, and total agree to the cent", () => {
@@ -36,6 +63,13 @@ describe("computeTotals rounding", () => {
     expect(currencyMinorDigits("USD")).toBe(2);
     expect(roundTo(1.005, 2)).toBe(1.01);
   });
+
+  it("handles 5% tax on 80.30 subtotal correctly", () => {
+    const t = computeTotals({ items: items([80.30, 1]), taxRate: 5, currency: "USD" });
+    expect(t.subtotal).toBe(80.30);
+    expect(t.tax).toBe(4.02);
+    expect(t.total).toBe(84.32);
+  });
 });
 
 describe("nextInvoiceNumber", () => {
@@ -48,5 +82,62 @@ describe("nextInvoiceNumber", () => {
 
   it("falls back to INV0001 for an empty list", () => {
     expect(nextInvoiceNumber([])).toBe("INV0001");
+  });
+
+  it.each([
+    ["1001", "1002"],
+    ["INV-07", "INV-08"],
+    ["A1", "A2"],
+    ["2026-001", "2026-002"],
+    ["999", "1000"],
+    ["INV0007", "INV0008"],
+  ])("keeps the prefix and padding of %s, giving %s", (highest, expected) => {
+    expect(nextInvoiceNumber([base(highest)])).toBe(expected);
+  });
+
+  it("lets a number that outgrows its width get longer", () => {
+    expect(nextInvoiceNumber([base("INV-99")])).toBe("INV-100");
+    expect(nextInvoiceNumber([base("INV9999")])).toBe("INV10000");
+  });
+
+  it("follows the highest number, not the last one saved", () => {
+    expect(nextInvoiceNumber([base("INV-02"), base("INV-10"), base("INV-03")])).toBe("INV-11");
+  });
+
+  it("ignores trailing spaces and invoices without a number", () => {
+    expect(nextInvoiceNumber([base("1001  "), base("draft"), base("")])).toBe("1002");
+  });
+
+  it("starts at the fallback prefix when no invoice has a number", () => {
+    expect(nextInvoiceNumber([base("draft"), base("")])).toBe("INV0001");
+    expect(nextInvoiceNumber([], "BILL", 6)).toBe("BILL000001");
+  });
+});
+
+describe("placeholderInvoice", () => {
+  // Blank out the fields that hold random ids or the current time, which the
+  // placeholder leaves out so server and client renders match.
+  function withoutVolatileFields(invoice: Invoice): Invoice {
+    return {
+      ...invoice,
+      id: "",
+      dateISO: "",
+      createdAt: 0,
+      updatedAt: 0,
+      items: invoice.items.map((item) => ({ ...item, id: "" })),
+    };
+  }
+
+  it("is the same on every call, so SSR and hydration render identical HTML", () => {
+    expect(placeholderInvoice()).toEqual(placeholderInvoice());
+  });
+
+  it("has the same shape as a fresh invoice, so the editor keeps its size when it's replaced", () => {
+    const fresh = emptyInvoice(DEFAULT_SENDER, nextInvoiceNumber([]));
+    expect(withoutVolatileFields(placeholderInvoice())).toEqual(withoutVolatileFields(fresh));
+  });
+
+  it("doesn't share the default sender object", () => {
+    expect(placeholderInvoice().sender).not.toBe(DEFAULT_SENDER);
   });
 });

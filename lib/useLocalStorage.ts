@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function useLocalStorage<T>(
   key: string,
@@ -8,7 +8,7 @@ export function useLocalStorage<T>(
 ): [T, (value: T | ((prev: T) => T)) => void, () => void, Error | null] {
   const [value, setValue] = useState<T>(initial);
   const [persistError, setPersistError] = useState<Error | null>(null);
-  const loadedRef = useRef(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
@@ -17,11 +17,13 @@ export function useLocalStorage<T>(
     } catch {
       /* ignore */
     }
-    loadedRef.current = true;
+    setLoaded(true);
   }, [key]);
 
+  // Wait for the render that has the stored value, or the initial value
+  // would be written over it on mount.
   useEffect(() => {
-    if (!loadedRef.current) return;
+    if (!loaded) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
       setPersistError(null);
@@ -30,7 +32,25 @@ export function useLocalStorage<T>(
       // the user instead of silently dropping their data.
       setPersistError(e instanceof Error ? e : new Error("Storage write failed"));
     }
-  }, [key, value]);
+  }, [key, value, loaded]);
+
+  // Adopt changes made under the same key by another tab, so a later write
+  // from this tab does not overwrite what the other tab just saved.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== key) return;
+
+      try {
+        setValue(event.newValue === null ? initial : (JSON.parse(event.newValue) as T));
+        setPersistError(null);
+      } catch {
+        /* ignore malformed storage */
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [key, initial]);
 
   const reset = useCallback(() => {
     try {

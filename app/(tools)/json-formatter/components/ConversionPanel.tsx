@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { stringify as llStringify } from "lossless-json";
 import {
   FileCode2,
   FileSpreadsheet,
@@ -40,6 +41,7 @@ const LANG_OPTIONS: { id: EscapeLang; label: string }[] = [
 ];
 
 export function ConversionPanel({ input }: { input: string }) {
+  const conversionsPanelId = "json-conversions-panel";
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("ts");
   const [lang, setLang] = useState<EscapeLang>("javascript");
@@ -79,6 +81,8 @@ export function ConversionPanel({ input }: { input: string }) {
     <section className="mt-6">
       <button
         type="button"
+        aria-expanded={open}
+        aria-controls={conversionsPanelId}
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-[var(--hairline)] bg-[var(--bg-card)] hover:border-[var(--hairline-strong)] transition-colors"
       >
@@ -98,8 +102,12 @@ export function ConversionPanel({ input }: { input: string }) {
         />
       </button>
       {open && (
-        <div className="mt-3 animate-fade-in">
-          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+        <div id={conversionsPanelId} className="mt-3 animate-fade-in">
+          <div
+            className="flex items-center gap-1.5 mb-3 flex-wrap"
+            role="group"
+            aria-label="Conversion mode"
+          >
             <ModeButton active={mode === "ts"} onClick={() => setMode("ts")} icon={<FileCode2 className="w-3.5 h-3.5" />}>TypeScript</ModeButton>
             <ModeButton active={mode === "csv"} onClick={() => setMode("csv")} icon={<FileSpreadsheet className="w-3.5 h-3.5" />}>CSV</ModeButton>
             <ModeButton active={mode === "yaml"} onClick={() => setMode("yaml")} icon={<FileText className="w-3.5 h-3.5" />}>YAML</ModeButton>
@@ -112,10 +120,14 @@ export function ConversionPanel({ input }: { input: string }) {
 
           {mode === "escape" && (
             <div className="flex items-center gap-2 mb-2">
-              <span className="font-mono text-[10.5px] tracking-[0.22em] uppercase text-[var(--fg-dim)]">
+              <label
+                htmlFor="json-escape-target-language"
+                className="font-mono text-[10.5px] tracking-[0.22em] uppercase text-[var(--fg-dim)]"
+              >
                 Target language
-              </span>
+              </label>
               <select
+                id="json-escape-target-language"
                 value={lang}
                 onChange={(e) => setLang(e.target.value as EscapeLang)}
                 className="bg-[var(--bg-raise)] border border-[var(--hairline)] rounded px-2 py-1 text-[12.5px] text-[var(--fg)] font-mono"
@@ -223,7 +235,7 @@ export function ConversionPanel({ input }: { input: string }) {
                 )}
                 {jsonPathResult?.ok && jsonPathResult.matches.length > 0 && (
                   <pre className="font-mono text-[12.5px] leading-[1.65] whitespace-pre-wrap break-all text-[var(--fg)]">
-                    {JSON.stringify(jsonPathResult.matches, null, 2)}
+                    {llStringify(jsonPathResult.matches, null, 2) as string}
                   </pre>
                 )}
               </div>
@@ -234,7 +246,7 @@ export function ConversionPanel({ input }: { input: string }) {
                     {jsonPathResult.paths.length > 3 && ` · +${jsonPathResult.paths.length - 3}`}
                   </span>
                   <CopyButton
-                    value={JSON.stringify(jsonPathResult.matches, null, 2)}
+                    value={llStringify(jsonPathResult.matches, null, 2) as string}
                     label="Copy matches"
                     className="py-1"
                   />
@@ -292,6 +304,7 @@ function ModeButton({
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={cn(
         "btn text-[12.5px] py-1.5",

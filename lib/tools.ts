@@ -47,6 +47,8 @@ export interface Tool {
   faqs: ToolFaq[];
   cta: ToolCta;
   sitemapPriority: number;
+  /** ISO date string (YYYY-MM-DD) overriding build-time git history for the sitemap. */
+  lastModified?: string;
 }
 
 const CTA_PROJECTS = "https://www.codercops.com/projects";
@@ -313,6 +315,320 @@ export const TOOLS: Tool[] = [
       primaryLabel: "View our work",
       primaryHref: CTA_PROJECTS,
       secondaryLabel: "Get a free quote",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
+  {
+    slug: "timestamp-converter",
+    path: "/timestamp-converter",
+    title: "Unix Timestamp Converter",
+    tagline: "Time",
+    cardDescription:
+      "Convert Unix timestamps and dates with automatic unit detection, UTC, local time, ISO 8601, and relative time.",
+    features: ["Epoch to date", "Date to epoch", "Seconds or ms", "ISO 8601", "Relative time"],
+    accentVar: "--green",
+    accentHex: "#3FDD6B",
+    metaTitle: "Unix Timestamp Converter - Free Online Tool",
+    metaDescription:
+      "Convert Unix timestamps to readable dates and dates to epoch time. Detect seconds or milliseconds, view UTC and local time, and copy ISO 8601 output.",
+    ogTitle: "Unix Timestamp Converter - CODERCOPS Tools",
+    ogDescription:
+      "Convert Unix timestamps and dates. Detect seconds or milliseconds, inspect UTC and local time, and copy ISO 8601 output.",
+    heroBreadcrumb: "Time",
+    heroHeading: "Unix Timestamp Converter",
+    heroDim: "",
+    heroDescription:
+      "Convert epoch timestamps to readable dates or dates to Unix time. All conversions run locally in your browser.",
+    jsonLdName: "Unix Timestamp Converter",
+    jsonLdDescription:
+      "Free online Unix timestamp converter for epoch-to-date and date-to-epoch conversions, with automatic unit detection and ISO 8601 output.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "What is a Unix timestamp?",
+        a: "A Unix timestamp measures elapsed time from 1970-01-01 00:00:00 UTC. It is commonly represented in seconds or milliseconds.",
+      },
+      {
+        q: "How can I tell seconds from milliseconds?",
+        a: "This tool estimates the unit from the number's magnitude. You can also select seconds, milliseconds, microseconds, or nanoseconds manually.",
+      },
+      {
+        q: "Are my timestamps sent to a server?",
+        a: "No. Conversion happens locally in your browser. The values you enter are not uploaded by this tool.",
+      },
+      {
+        q: "Which date formats are supported?",
+        a: "ISO 8601 timestamps and date strings understood by your browser are supported. For unambiguous results, include a timezone such as Z or an explicit UTC offset.",
+      },
+    ],
+    cta: {
+      headline: "Building tools that handle dates and APIs?",
+      sub: "CODERCOPS builds production-grade backends, REST APIs, and full-stack applications for startups and businesses.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get a free quote",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
+  {
+    slug: "color-converter",
+    path: "/color-converter",
+    title: "Color Converter & Contrast Checker",
+    tagline: "Design",
+    cardDescription:
+      "Convert between HEX, RGB, and HSL formats with alpha support, live swatch preview, and WCAG AA and AAA accessibility contrast checking.",
+    features: ["HEX", "RGB", "HSL", "Alpha", "WCAG contrast"],
+    accentVar: "--fuchsia",
+    accentHex: "#F26DF0",
+    metaTitle: "Color Converter & Contrast Checker - Free Tool",
+    metaDescription:
+      "Convert colors between HEX, RGB, and HSL formats with alpha support, live swatch preview, and WCAG AA/AAA contrast ratio checking. Fast, free, and private.",
+    ogTitle: "Color Converter & Contrast Checker - CODERCOPS Tools",
+    ogDescription:
+      "Convert between HEX, RGB, and HSL with alpha channel support, live swatch, and WCAG contrast ratios.",
+    heroBreadcrumb: "Convert · Preview · Contrast",
+    heroHeading: "Color Converter & Contrast Checker",
+    heroDim: "&",
+    heroDescription:
+      "Convert colors between HEX, RGB, and HSL formats and check WCAG accessibility contrast ratios in real time — 100% in your browser.",
+    jsonLdName: "Color Converter & Contrast Checker",
+    jsonLdDescription:
+      "Free online color converter and contrast checker supporting HEX, RGB, HSL, alpha channel, and WCAG AA/AAA contrast ratios.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "How does the color converter handle alpha transparency?",
+        a: "Alpha transparency is supported in 8-digit HEX (#rrggbbaa), rgba(), and hsla() notations. Alpha is normalized between 0 and 1 and factored into contrast calculations when blended over backgrounds.",
+      },
+      {
+        q: "What are WCAG AA and AAA contrast requirements?",
+        a: "Under WCAG 2.1 guidelines, normal text requires a contrast ratio of at least 4.5:1 for level AA and 7:1 for level AAA. Large text (at least 18pt or 14pt bold) requires at least 3:1 for AA and 4.5:1 for AAA.",
+      },
+      {
+        q: "Can I enter modern CSS space-separated color syntax?",
+        a: "Yes. Both legacy comma-separated syntax like rgb(255, 0, 0) and modern CSS Color 4 space-separated syntax like rgb(255 0 0 / 0.5) and hsl(200 100% 50% / 0.8) are supported.",
+      },
+      {
+        q: "Is any color data sent to a server?",
+        a: "No. All conversions, swatch rendering, and contrast calculations run entirely in your browser using client-side JavaScript. No data ever leaves your device.",
+      },
+    ],
+    cta: {
+      headline: "Building accessible web apps and design systems?",
+      sub: "CODERCOPS designs and builds accessible, high-performance web applications and UI component systems for startups and enterprises.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get in touch",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
+  {
+    slug: "case-converter",
+    path: "/case-converter",
+    title: "Text Case Converter",
+    tagline: "Text",
+    cardDescription:
+      "Convert text between camelCase, snake_case, kebab-case, and 7 more naming conventions. Handles acronyms, digits, and multi-line input.",
+    features: ["camelCase", "snake_case", "kebab-case", "CONSTANT_CASE", "Title Case"],
+    accentVar: "--lime",
+    accentHex: "#A6F36B",
+    metaTitle: "Text Case Converter - Free Online Tool",
+    metaDescription:
+      "Free online text case converter. Convert between camelCase, snake_case, kebab-case, CONSTANT_CASE and 6 more styles instantly in your browser. No signup.",
+    ogTitle: "Text Case Converter - CODERCOPS Tools",
+    ogDescription:
+      "Convert text between camelCase, snake_case, kebab-case, CONSTANT_CASE and more. Free, instant, and private.",
+    heroBreadcrumb: "Text",
+    heroHeading: "Text Case Converter",
+    heroDim: "Converter",
+    heroDescription:
+      "Paste text once and get it in every common naming convention — camelCase, snake_case, kebab-case, and more. Everything runs in your browser.",
+    jsonLdName: "Text Case Converter",
+    jsonLdDescription:
+      "Free online text case converter supporting camelCase, PascalCase, snake_case, CONSTANT_CASE, kebab-case, dot.case, Title Case, and more.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "Is my text uploaded anywhere?",
+        a: "No. All conversion runs locally in your browser. The text you paste never leaves your tab, is never sent to a server, and is never logged.",
+      },
+      {
+        q: "How does it split words?",
+        a: "It breaks on spaces, underscores, dashes, dots, and slashes, detects camelCase and PascalCase boundaries, keeps acronyms like XMLHttpRequest as single words, and understands non-ASCII letters.",
+      },
+      {
+        q: "Which cases are supported?",
+        a: "Ten styles: camelCase, PascalCase, snake_case, CONSTANT_CASE, kebab-case, dot.case, Title Case, Sentence case, lowercase, and UPPERCASE. Multi-line input is converted line by line.",
+      },
+    ],
+    cta: {
+      headline: "Renaming things across a whole codebase?",
+      sub: "CODERCOPS builds production-grade backends, REST APIs, and full-stack applications for startups and businesses.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get a free quote",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
+  {
+    slug: "number-base-converter",
+    path: "/number-base-converter",
+    title: "Number Base Converter",
+    tagline: "Numbers",
+    cardDescription:
+      "Convert integers between binary, octal, decimal, hex and any base from 2 to 36, with two's complement for 8, 16, 32 and 64 bits.",
+    features: ["Binary", "Octal", "Decimal", "Hex", "Two's complement"],
+    accentVar: "--violet",
+    accentHex: "#9E7BFF",
+    metaTitle: "Number Base Converter - Binary, Hex, Octal, Decimal",
+    metaDescription:
+      "Number base converter for binary, octal, decimal, hex and any base from 2 to 36, with two's complement up to 64 bits. Exact for big numbers, in your browser.",
+    ogTitle: "Number Base Converter - CODERCOPS Tools",
+    ogDescription:
+      "Convert integers between binary, octal, decimal, hex and any base up to 36, with two's complement, in your browser.",
+    heroBreadcrumb: "Binary · Octal · Decimal · Hex",
+    heroHeading: "Number Base Converter",
+    heroDim: "",
+    heroDescription:
+      "Paste an integer in any base from 2 to 36 and read it in binary, octal, decimal and hex at once, plus its two's complement. Big numbers stay exact.",
+    jsonLdName: "Number Base Converter",
+    jsonLdDescription:
+      "Free online converter for integers between bases 2 to 36, including binary, octal, decimal and hex, with two's complement for 8, 16, 32 and 64 bits.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "Which prefixes and separators does it understand?",
+        a: "With the input base on auto-detect, 0b means binary, 0o octal and 0x hex, and anything else is read as decimal. A leading - or + comes before the prefix, as in -0b1010. Underscores and spaces between digits are ignored, so 1111_1111 and 1 000 000 both work.",
+      },
+      {
+        q: "Does it handle numbers bigger than 2^53?",
+        a: "Yes. Every conversion uses JavaScript BigInt, so there is no rounding at any size. 18446744073709551616 (2^64) comes out as exactly 10000000000000000 in hex.",
+      },
+      {
+        q: "How does two's complement work here?",
+        a: "Pick a width of 8, 16, 32 or 64 bits. A negative number is written as 2^width plus the value, so -1 in 8 bits is 11111111. If the number doesn't fit in a signed integer of that width, for example 128 in 8 bits, the tool says so instead of wrapping it around.",
+      },
+      {
+        q: "Is my input sent anywhere?",
+        a: "No. The conversion runs entirely in your browser. Nothing you type leaves the page.",
+      },
+    ],
+    cta: {
+      headline: "Working close to the bits?",
+      sub: "CODERCOPS builds production APIs, data pipelines, and developer tooling for startups and enterprises.",
+      primaryLabel: "See our projects",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get a free quote",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
+  {
+    slug: "uuid-generator",
+    path: "/uuid-generator",
+    title: "UUID Generator & Inspector",
+    tagline: "Identifiers",
+    cardDescription:
+      "Generate UUID v4 and v7 identifiers locally, create batches, customize formatting, and inspect versions, variants, and v7 timestamps.",
+    features: ["UUID v4", "UUID v7", "Bulk", "Inspect", "No hyphens"],
+    accentVar: "--amber",
+    accentHex: "#FFB547",
+    metaTitle: "UUID Generator & Inspector - Free Online Tool",
+    metaDescription:
+      "Generate UUID v4 and v7 values in your browser. Create batches, choose uppercase or compact output, and inspect UUID versions, variants, and timestamps.",
+    ogTitle: "UUID Generator & Inspector - CODERCOPS Tools",
+    ogDescription:
+      "Generate UUID v4 and v7 identifiers, create batches, and inspect versions, variants, and timestamps locally.",
+    heroBreadcrumb: "Identifiers",
+    heroHeading: "UUID Generator & Inspector",
+    heroDim: "&",
+    heroDescription:
+      "Generate random UUID v4 and time-ordered UUID v7 values, or inspect a UUID's version, variant, and v7 timestamp. Everything stays in your browser.",
+    jsonLdName: "UUID Generator & Inspector",
+    jsonLdDescription:
+      "A browser-based UUID v4 and v7 generator and inspector with bulk generation, formatting options, and UUID version, variant, and timestamp details.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "What UUID versions can I generate?",
+        a: "Generate random UUID v4 values or time-ordered UUID v7 values, which include a Unix timestamp in milliseconds. Other versions are outside this tool's scope.",
+      },
+      {
+        q: "Can I generate multiple UUIDs at once?",
+        a: "Yes. Generate between 1 and 100 UUIDs at a time, then copy an individual value or the complete batch.",
+      },
+      {
+        q: "What does the inspector show?",
+        a: "It identifies the UUID version and variant. For UUID v7, it also displays the encoded Unix timestamp in milliseconds and as a date.",
+      },
+      {
+        q: "Are my UUIDs sent to a server?",
+        a: "No. UUID generation, formatting, and inspection happen in your browser. Nothing you enter or generate is uploaded.",
+      },
+    ],
+    cta: {
+      headline: "Building software that needs reliable identifiers?",
+      sub: "CODERCOPS builds production APIs, data systems, and full-stack applications for startups and enterprises.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get in touch",
+      secondaryHref: CTA_CONTACT,
+    },
+    sitemapPriority: 0.9,
+  },
+  {
+    slug: "cron-explainer",
+    path: "/cron-explainer",
+    title: "Cron Expression Explainer",
+    tagline: "Scheduling",
+    cardDescription:
+      "Paste a crontab line and get a plain-English description, a field-by-field breakdown and the next run times in UTC or your local time.",
+    features: ["Plain English", "Next runs", "Ranges and steps", "Macros", "UTC or local"],
+    accentVar: "--sky",
+    accentHex: "#5AB5FF",
+    metaTitle: "Cron Expression Explainer - Free Online Tool",
+    metaDescription:
+      "Paste a cron expression and read it in plain English with the next run times. Handles ranges, steps, names and macros like @daily. Runs in your browser.",
+    ogTitle: "Cron Expression Explainer - CODERCOPS Tools",
+    ogDescription:
+      "Explain any cron expression in plain English and see the next run times in UTC or local time. Free and private.",
+    heroBreadcrumb: "Scheduling",
+    heroHeading: "Cron Expression Explainer",
+    heroDim: "",
+    heroDescription:
+      "Paste a crontab line from a CI schedule, a Kubernetes CronJob or a GitHub Actions workflow and see what it means, field by field, with the next times it runs. Everything stays in your browser.",
+    jsonLdName: "Cron Expression Explainer",
+    jsonLdDescription:
+      "A browser-based cron expression explainer that describes a schedule in plain English, breaks it down field by field and lists the next run times in UTC or local time.",
+    applicationCategory: "DeveloperApplication",
+    faqs: [
+      {
+        q: "Which cron syntax does it understand?",
+        a: "Standard five-field cron: minute, hour, day of month, month and day of week. It reads lists, ranges, steps such as */15 and 1-10/2, month and weekday names such as JAN and MON, and the macros @hourly, @daily, @weekly, @monthly and @yearly. Seconds and year fields (Quartz style) and Jenkins H syntax are not supported.",
+      },
+      {
+        q: "What happens when both the day of month and the day of week are set?",
+        a: "Classic cron runs the job on days that match either one. So 0 0 1 * 1 runs at midnight on the first of every month and also every Monday. If either field starts with *, both have to match.",
+      },
+      {
+        q: "How are the next run times worked out?",
+        a: "The tool steps through the calendar from the current time and lists the next five times the schedule fires, in UTC or in your local time. A schedule that can never run, such as 0 0 31 2 *, says so instead of searching forever.",
+      },
+      {
+        q: "Is my cron expression sent to a server?",
+        a: "No. Parsing, describing and working out the run times all happen in your browser. Nothing you type is uploaded.",
+      },
+    ],
+    cta: {
+      headline: "Running scheduled jobs in production?",
+      sub: "CODERCOPS builds reliable backends, data pipelines, and full-stack applications for startups and enterprises.",
+      primaryLabel: "View our work",
+      primaryHref: CTA_PROJECTS,
+      secondaryLabel: "Get in touch",
       secondaryHref: CTA_CONTACT,
     },
     sitemapPriority: 0.9,

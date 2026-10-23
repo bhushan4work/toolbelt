@@ -63,6 +63,8 @@ A developer's toolbelt: fast, privacy-first browser tools. Everything runs clien
 - **[JWT decoder and inspector](https://tools.codercops.com/jwt-decoder).** Decode header, payload, and claims; verify HS/RS/PS/ES signatures via WebCrypto; security audit; HS256/384/512 encoder.
 - **[Base64 encoder and decoder](https://tools.codercops.com/base64).** Text, images, and files; URL-safe variant; data URIs; magic-byte detection; Base32/58/85 and hashes.
 - **[Invoice generator](https://tools.codercops.com/invoice-generator).** Live preview, vector PDF export with Unicode currency support, a reusable sender profile, all saved locally.
+- **[Color converter & contrast checker](https://tools.codercops.com/color-converter).** Convert between HEX, RGB, and HSL with alpha channel support, live swatch, and WCAG AA/AAA contrast ratios for normal and large text.
+- **[UUID Generator & Inspector](https://tools.codercops.com/uuid-generator).** Generate UUID v4 and v7 identifiers locally, create batches, customize formatting, and inspect version, variant, and v7 timestamps.
 
 ## Why it exists
 
@@ -104,6 +106,8 @@ Note: Type-checking a fresh clone will fail if `generated/og-fonts.ts` doesn't e
 
 tools.codercops.com runs on Cloudflare Workers through the OpenNext adapter (`wrangler.jsonc`, `open-next.config.ts`), deployed by Workers Builds: build with `npx opennextjs-cloudflare build`, deploy with `npx opennextjs-cloudflare deploy` (`--env dev` for the `toolbelt-dev` develop Worker). The only build variable is `NEXT_PUBLIC_DEPLOY_ENV` (`production`, or `develop`, which makes the site noindex). The GitHub star count is cached in the `toolbelt-cache` R2 bucket. `npm run preview` builds and serves the Worker locally. If you fork it, update the domain in `lib/tools.ts` (`SITE_URL`), `lib/og.tsx:198,212`, `lib/invoice-pdf.ts:315` and `routes` in `wrangler.jsonc` so the sitemap and canonical URLs point at your host, and update `GITHUB_REPO` in `lib/tools.ts` so the star-count link points at your fork.
 
+Verifying site ownership in Google Search Console and Bing Webmaster Tools is optional. Configure `GOOGLE_SITE_VERIFICATION` and/or `BING_SITE_VERIFICATION` as secrets on your Worker rather than plain-text environment variables (plain-text variables are removed on subsequent deploys because `keep_vars` is not enabled in `wrangler.jsonc`, whereas secrets persist across deploys, are available at runtime, and require no rebuild). Run `npx wrangler secret put GOOGLE_SITE_VERIFICATION` and `npx wrangler secret put BING_SITE_VERIFICATION` (pass `--env dev` for the development Worker). Alternatively, add both with type `Secret` under Cloudflare dashboard → Workers & Pages → your Worker → Settings → Variables and Secrets. Each token renders its ownership meta tag (`google-site-verification`, and Bing's `msvalidate.01`) only when its secret is configured, so previews and forks that leave them unset render no verification tags at all.
+
 ## Add a tool
 
 The tool set is a single typed registry in [`lib/tools.ts`](lib/tools.ts). The home grid, per-tool metadata, JSON-LD (SoftwareApplication, breadcrumb, FAQ), social share images, hero, FAQ, CTA, sitemap, web manifest, and command palette all derive from it. To add a tool:
@@ -112,13 +116,23 @@ The tool set is a single typed registry in [`lib/tools.ts`](lib/tools.ts). The h
 2. Create `app/(tools)/<slug>/page.tsx` (metadata plus your client component), its `<Name>Client.tsx`, and an `opengraph-image.tsx` (a few lines that pass the registry entry to the shared renderer).
 3. Put pure logic in `lib/` and cover it with a test in `lib/__tests__/`.
 
+## Add a guide
+
+The guides collection is a single typed registry in [`lib/guides.ts`](lib/guides.ts). The guides index, per-guide metadata, JSON-LD (Article, HowTo, BreadcrumbList), social share images, and sitemap all derive from it. To add a guide:
+
+1. Add an entry to the `GUIDES` array in `lib/guides.ts`.
+2. Create `app/guides/<slug>/page.tsx` (metadata plus your guide content) and an `opengraph-image.tsx` (a few lines that pass the registry entry to the shared `renderGuideOgImage`).
+3. Add a test in `lib/__tests__/guides.test.ts` to ensure metadata, routes, and structured-data invariants hold.
+
 ## Project layout
 
 ```
 app/                 shell (layout, error/not-found boundaries, metadata routes)
 app/(tools)/         one route per tool, sharing a layout and ToolPageLayout
+app/guides/          guides index and walkthroughs
 components/shared/   header, theme, toasts, command palette, reusable UI
 lib/                 pure per-tool logic (parsing, crypto, PDF, conversions), unit-tested
+lib/guides.ts        the guides registry (single source of truth for guides)
 lib/tools.ts         the tool registry (single source of truth)
 lib/jsonLd.ts        schema.org builders derived from the registry
 lib/og.tsx           the shared Open Graph card renderer

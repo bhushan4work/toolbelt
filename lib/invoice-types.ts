@@ -82,7 +82,14 @@ export function currencyMinorDigits(currency: string): number {
 export function roundTo(value: number, digits: number): number {
   if (!Number.isFinite(value)) return 0;
   const f = Math.pow(10, digits);
-  return Math.round((value + Number.EPSILON) * f) / f;
+  const sign = value < 0 ? -1 : 1;
+  
+  // Multiply first, then use toPrecision(15) to fix inherent JS float errors
+  const scaled = Math.abs(value) * f;
+  const preciseScaled = Number(scaled.toPrecision(15));
+  
+  // Round half away from zero and restore the original sign
+  return (Math.round(preciseScaled) / f) * sign;
 }
 
 export function computeTotals(
@@ -145,25 +152,25 @@ export function todayISO(): string {
 }
 
 /**
- * Next number after the highest existing one. Preserves the prefix and
- * zero-padding of the highest invoice (so "INV0041" -> "INV0042").
- * Empty list -> "INV0001".
+ * Next number after the highest existing one. Keeps the prefix (even an empty
+ * one) and the zero-padding of the highest invoice exactly as they are:
+ * "INV0041" -> "INV0042", "1001" -> "1002", "INV-07" -> "INV-08". A number that
+ * outgrows its width just gets longer ("INV-99" -> "INV-100").
+ * With no numbered invoice yet, starts at `fallbackPrefix` + `pad` digits:
+ * "INV0001".
  */
 export function nextInvoiceNumber(invoices: Invoice[], fallbackPrefix = "INV", pad = 4): string {
-  let max = 0;
-  let prefix = fallbackPrefix;
-  let width = pad;
+  let highest: { prefix: string; digits: string; value: number } | undefined;
   for (const inv of invoices) {
     const match = (inv.number || "").match(/^(.*?)(\d+)\s*$/);
     if (!match) continue;
-    const n = parseInt(match[2], 10);
-    if (n >= max) {
-      max = n;
-      prefix = match[1] || fallbackPrefix;
-      width = Math.max(pad, match[2].length);
+    const value = parseInt(match[2], 10);
+    if (!highest || value >= highest.value) {
+      highest = { prefix: match[1], digits: match[2], value };
     }
   }
-  return `${prefix}${String(max + 1).padStart(width, "0")}`;
+  if (!highest) return `${fallbackPrefix}${String(1).padStart(pad, "0")}`;
+  return `${highest.prefix}${String(highest.value + 1).padStart(highest.digits.length, "0")}`;
 }
 
 export const DEFAULT_SENDER: SenderProfile = {
@@ -192,6 +199,30 @@ export function emptyInvoice(sender: SenderProfile, number: string): Invoice {
     notes: "",
     createdAt: now,
     updatedAt: now,
+  };
+}
+
+/**
+ * Stand-in for the working invoice until it's seeded from localStorage after
+ * mount. It has the same shape as a fresh `emptyInvoice` (default sender, one
+ * blank line item), so the editor and preview render at their real size during
+ * SSR and hydration instead of collapsing and pushing the page down later.
+ * It has no random ids or dates, so the server and client HTML match.
+ */
+export function placeholderInvoice(): Invoice {
+  return {
+    id: "placeholder",
+    number: nextInvoiceNumber([]),
+    dateISO: "",
+    dueText: "On Receipt",
+    currency: "USD",
+    sender: cloneSender(DEFAULT_SENDER),
+    billTo: { name: "", email: "", addressLines: [] },
+    items: [{ id: "placeholder-item", description: "", rate: 0, qty: 1 }],
+    taxRate: 0,
+    notes: "",
+    createdAt: 0,
+    updatedAt: 0,
   };
 }
 

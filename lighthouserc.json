@@ -1,0 +1,40 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 1,
+      "url": [
+        "http://127.0.0.1:8787/",
+        "http://127.0.0.1:8787/json-formatter",
+        "http://127.0.0.1:8787/jwt-decoder",
+        "http://127.0.0.1:8787/base64",
+        "http://127.0.0.1:8787/invoice-generator"
+      ],
+      "settings": {
+        "preset": "desktop",
+        "chromeFlags": "--headless --no-sandbox"
+      }
+    },
+    "assert": {
+      "includePassedAssertions": true,
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "largest-contentful-paint": ["warn", { "maxNumericValue": 2500 }],
+            "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.1 }],
+            "total-byte-weight": ["warn", { "maxNumericValue": 512000 }],
+            "resource-summary:script:size": ["warn", { "maxNumericValue": 307200 }]
+          }
+        },
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 4000 }],
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.25 }],
+            "total-byte-weight": ["error", { "maxNumericValue": 1048576 }]
+          }
+        }
+      ]
+    }
+  }
+}

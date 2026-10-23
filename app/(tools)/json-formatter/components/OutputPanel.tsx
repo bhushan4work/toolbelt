@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { parse, LosslessNumber } from "lossless-json";
 import { ChevronDown, ChevronRight, List, TreePine, FoldVertical, UnfoldVertical } from "lucide-react";
 import { tokenize } from "@/lib/json-utils";
 import { cn } from "@/lib/cn";
@@ -76,6 +77,7 @@ export function OutputPanel({ output, theme = "dark" }: OutputPanelProps) {
           <div className="segmented" role="group" aria-label="View mode">
             <button
               type="button"
+              aria-pressed={mode === "code"}
               data-active={mode === "code"}
               onClick={() => setMode("code")}
               title="Code view"
@@ -85,6 +87,7 @@ export function OutputPanel({ output, theme = "dark" }: OutputPanelProps) {
             </button>
             <button
               type="button"
+              aria-pressed={mode === "tree"}
               data-active={mode === "tree"}
               onClick={() => setMode("tree")}
               title="Tree view"
@@ -146,10 +149,10 @@ function CodeView({ output, theme }: { output: string; theme: "dark" | "light" }
 }
 
 /* Tree view */
-function TreeView({ output, forceOpen }: { output: string; forceOpen: boolean | null }) {
+export function TreeView({ output, forceOpen }: { output: string; forceOpen: boolean | null }) {
   const data = useMemo(() => {
     try {
-      return { ok: true, value: JSON.parse(output) } as const;
+      return { ok: true, value: parse(output) } as const;
     } catch {
       return { ok: false } as const;
     }
@@ -179,7 +182,7 @@ function TreeNode({
 }) {
   const defaultOpen = forceOpen === null ? depth < 2 : forceOpen;
   const [open, setOpen] = useState(defaultOpen);
-  const isObj = value !== null && typeof value === "object" && !Array.isArray(value);
+  const isObj = value !== null && typeof value === "object" && !Array.isArray(value) && !(value instanceof LosslessNumber);
   const isArr = Array.isArray(value);
   const isContainer = isObj || isArr;
   const entries = isObj
@@ -269,6 +272,7 @@ function TreeNode({
 function ValueToken({ value }: { value: unknown }) {
   if (value === null) return <span className="tok-null">null</span>;
   if (typeof value === "string") return <span className="tok-string">&quot;{value}&quot;</span>;
+  if (value instanceof LosslessNumber) return <span className="tok-number">{value.toString()}</span>;
   if (typeof value === "number") return <span className="tok-number">{String(value)}</span>;
   if (typeof value === "boolean") return <span className="tok-bool">{String(value)}</span>;
   return <span>{String(value)}</span>;

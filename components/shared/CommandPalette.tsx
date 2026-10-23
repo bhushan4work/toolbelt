@@ -13,7 +13,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { Search, ArrowRight, Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { TOOLS } from "@/lib/tools";
+import { GUIDES } from "@/lib/guides";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/lib/platform";
 
 export interface Command {
   id: string;
@@ -35,6 +37,7 @@ interface PaletteCtx {
 const Ctx = createContext<PaletteCtx | null>(null);
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
+  const { modKey } = usePlatform();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
@@ -44,6 +47,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
   const scopedRef = useRef<Record<string, Command[]>>({});
   const [scopedTick, setScopedTick] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const keyboardSelectionRef = useRef(false);
 
   const register = useCallback((scope: string, commands: Command[]) => {
     scopedRef.current[scope] = commands;
@@ -115,6 +119,22 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
         keywords: `${t.slug} ${t.tagline} ${t.features.join(" ")}`.toLowerCase(),
         run: () => router.push(t.path),
       })),
+      {
+        id: "nav:guides",
+        section: "Navigation",
+        title: "Go to Guides",
+        hint: "/guides",
+        keywords: "guides tutorials walkthroughs docs",
+        run: () => router.push("/guides"),
+      },
+      ...GUIDES.map((g) => ({
+        id: `nav:guide:${g.slug}`,
+        section: "Guides",
+        title: g.title,
+        hint: g.path,
+        keywords: `${g.slug} ${g.tagline} ${g.tags.join(" ")}`.toLowerCase(),
+        run: () => router.push(g.path),
+      })),
     ];
     const system: Command[] = [
       {
@@ -142,6 +162,12 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
   useEffect(() => setCursor(0), [query]);
 
+  useEffect(() => {
+    if (!isOpen || !keyboardSelectionRef.current) return;
+    document.getElementById(`cmd-opt-${cursor}`)?.scrollIntoView({ block: "nearest" });
+    keyboardSelectionRef.current = false;
+  }, [cursor, isOpen]);
+
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Tab") {
       // Trap focus: the palette is a combobox driven by arrows, so keep focus
@@ -149,9 +175,11 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
       e.preventDefault();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
+      keyboardSelectionRef.current = true;
       setCursor((c) => Math.min(filtered.length - 1, c + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
+      keyboardSelectionRef.current = true;
       setCursor((c) => Math.max(0, c - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
@@ -185,7 +213,10 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
               <input
                 ref={inputRef}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  keyboardSelectionRef.current = false;
+                  setQuery(e.target.value);
+                }}
                 onKeyDown={onKeyDown}
                 placeholder="Search commands, tools, actions..."
                 className="flex-1 bg-transparent text-[14px] text-[var(--fg)] outline-none font-mono"
@@ -205,9 +236,12 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
                 </div>
               )}
               {filtered.map((cmd, i) => (
-                <div key={cmd.id}>
+                <div key={cmd.id} role="presentation">
                   {i === 0 || filtered[i - 1].section !== cmd.section ? (
-                    <div className="px-4 pt-2 pb-1 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--fg-dim)]">
+                    <div
+                      role="presentation"
+                      className="px-4 pt-2 pb-1 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--fg-dim)]"
+                    >
                       {cmd.section ?? "Actions"}
                     </div>
                   ) : null}
@@ -219,7 +253,10 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
                       setIsOpen(false);
                       Promise.resolve(cmd.run()).catch(() => {});
                     }}
-                    onMouseEnter={() => setCursor(i)}
+                    onMouseMove={() => {
+                      keyboardSelectionRef.current = false;
+                      setCursor(i);
+                    }}
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                       i === cursor ? "bg-white/[0.05]" : "hover:bg-white/[0.03]"
@@ -262,7 +299,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
                 select
               </span>
               <span className="flex items-center gap-2">
-                <kbd className="kbd">⌘</kbd>
+                <kbd className="kbd">{modKey}</kbd>
                 <kbd className="kbd">K</kbd>
                 toggle
               </span>

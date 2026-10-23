@@ -31,6 +31,12 @@ export function Header() {
           >
             All tools
           </Link>
+          <Link
+            href="/guides"
+            className="hidden sm:inline-flex font-mono text-[11px] tracking-wider uppercase text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors px-2 py-1"
+          >
+            Guides
+          </Link>
           <a
             href="https://www.codercops.com"
             className="hidden md:inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wider uppercase text-[var(--fg-muted)] hover:text-[var(--cyan)] transition-colors px-2 py-1"

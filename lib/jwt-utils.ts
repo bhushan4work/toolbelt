@@ -128,6 +128,16 @@ export const STANDARD_CLAIMS: Record<string, string> = {
   jti: "JWT ID",
 };
 
+/** True only for claim names `STANDARD_CLAIMS` defines itself, not inherited ones like `__proto__`. */
+export function isStandardClaim(name: string): boolean {
+  return Object.hasOwn(STANDARD_CLAIMS, name);
+}
+
+/** Description for a header `alg`, or "Unknown algorithm" when `ALG_DESCRIPTIONS` has no own entry. */
+export function describeAlg(alg: string): string {
+  return Object.hasOwn(ALG_DESCRIPTIONS, alg) ? ALG_DESCRIPTIONS[alg] : "Unknown algorithm";
+}
+
 export function formatTimestamp(unixSeconds: number): string {
   const d = new Date(unixSeconds * 1000);
   if (isNaN(d.getTime())) return "invalid date";
@@ -165,7 +175,23 @@ export function relativeTime(unixSeconds: number, nowMs = Date.now()): string {
       break;
     }
   }
-  const n = Math.round(abs / divisor);
+  let n = Math.round(abs / divisor);
+  if (unit === "second" && n >= 60) {
+    unit = "minute";
+    n = 1;
+  } else if (unit === "minute" && n >= 60) {
+    unit = "hour";
+    n = 1;
+  } else if (unit === "hour" && n >= 24) {
+    unit = "day";
+    n = 1;
+  } else if (unit === "day" && n >= 30) {
+    unit = "month";
+    n = 1;
+  } else if (unit === "month" && n >= 12) {
+    unit = "year";
+    n = 1;
+  }
   const label = n === 1 ? unit : `${unit}s`;
   return future ? `in ${n} ${label}` : `${n} ${label} ago`;
 }
@@ -174,7 +200,7 @@ export function computeHealth(decoded: DecodedJwt, nowMs = Date.now()) {
   const header = decoded.header;
   const payload = decoded.payload;
   const alg = typeof header.alg === "string" ? header.alg : "unknown";
-  const algDesc = ALG_DESCRIPTIONS[alg] ?? "Unknown algorithm";
+  const algDesc = describeAlg(alg);
   const exp = typeof payload.exp === "number" ? payload.exp : null;
   const iat = typeof payload.iat === "number" ? payload.iat : null;
   const nbf = typeof payload.nbf === "number" ? payload.nbf : null;
@@ -192,8 +218,8 @@ export function computeHealth(decoded: DecodedJwt, nowMs = Date.now()) {
     expiry = { status: "valid", label: `Valid · expires ${relativeTime(exp, nowMs)}` };
   }
 
-  const standardKeys = Object.keys(payload).filter((k) => k in STANDARD_CLAIMS);
-  const customKeys = Object.keys(payload).filter((k) => !(k in STANDARD_CLAIMS));
+  const standardKeys = Object.keys(payload).filter((k) => isStandardClaim(k));
+  const customKeys = Object.keys(payload).filter((k) => !isStandardClaim(k));
 
   return {
     alg,
