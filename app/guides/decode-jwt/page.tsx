@@ -248,8 +248,26 @@ console.log(decode(payloadPart));`}
                 <code className="font-mono text-[var(--fg)]">+</code>,{" "}
                 <code className="font-mono text-[var(--fg)]">_</code> with{" "}
                 <code className="font-mono text-[var(--fg)]">/</code>, and restoring the{" "}
-                <code className="font-mono text-[var(--fg)]">=</code> padding. The JWT Decoder
-                below does that for you and displays the claims in a readable form.
+                <code className="font-mono text-[var(--fg)]">=</code> padding. Then convert the
+                binary string returned by <code className="font-mono text-[var(--fg)]">atob</code>{" "}
+                to bytes and decode them with{" "}
+                <code className="font-mono text-[var(--fg)]">TextDecoder</code>, because{" "}
+                <code className="font-mono text-[var(--fg)]">atob</code> alone does not correctly
+                decode non-ASCII UTF-8 claims:
+              </p>
+              <pre className="p-4 rounded-lg border border-[var(--hairline)] bg-[var(--bg-soft)] font-mono text-[12.5px] leading-[1.7] whitespace-pre-wrap break-all text-[var(--fg)]">
+                {`const decodePart = (part) => {
+  const pad = part.length % 4 === 2 ? "==" : part.length % 4 === 3 ? "=" : "";
+  const base64 = part.replace(/-/g, "+").replace(/_/g, "/") + pad;
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return JSON.parse(new TextDecoder("utf-8").decode(bytes));
+};`}
+              </pre>
+              <p>
+                The JWT Decoder below does that for you and displays the claims in a readable
+                form.
               </p>
               <p>For the example above, the decoded header and payload are:</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -321,7 +339,7 @@ console.log(decode(payloadPart));`}
                     </tr>
                     <tr>
                       <td className="px-4 py-3 font-mono text-[var(--fg)]">exp</td>
-                      <td className="px-4 py-3">Expiration time; the token must not be accepted after it</td>
+                      <td className="px-4 py-3">Expiration time; the token must not be accepted at or after it</td>
                       <td className="px-4 py-3 font-mono">1792717200</td>
                     </tr>
                     <tr>
@@ -347,7 +365,7 @@ console.log(decode(payloadPart));`}
               </h3>
               <p>
                 Claims such as <code className="font-mono text-[var(--fg)]">role</code>,{" "}
-                <code className="font-mono text-[var(--fg)]">scope</code>, or{" "}
+                <code className="font-mono text-[var(--fg)]">plan</code>, or{" "}
                 <code className="font-mono text-[var(--fg)]">tenant_id</code> are app-specific,
                 not part of the JWT standard. They are still readable by anyone holding the token,
                 so they must never contain passwords, API keys, or sensitive personal data. Treat

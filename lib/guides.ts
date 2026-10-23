@@ -176,7 +176,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: "Does decoding a JWT verify that it is valid?",
-        a: "No. Decoding only reveals the contents. Verification recomputes the signature with a trusted key and checks claims such as exp, nbf, aud, and iss. A token can decode perfectly and still be forged, expired, or issued for another audience.",
+        a: "No. Decoding only reveals the contents. Verification checks the signature with a trusted key and checks claims such as exp, nbf, aud, and iss. A token can decode perfectly and still be forged, expired, or issued for another audience.",
       },
       {
         q: "Why do JWT timestamps look like 1792713600?",
