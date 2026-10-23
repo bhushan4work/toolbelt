@@ -308,14 +308,16 @@ export function TextTab() {
             type="button"
             onClick={() => setShowLang((v) => !v)}
             className="w-full flex items-center justify-between px-3 py-2 border-b border-[var(--hairline)] bg-[var(--bg-raise)]"
+            aria-expanded={showLang}
+            aria-controls="base64-code-literal-panel"
           >
             <span className="font-mono text-[10.5px] tracking-[0.22em] uppercase text-[var(--fg-dim)] flex items-center gap-1.5">
               <FileCode className="w-3 h-3" />
-              Copy as code literal {showLang ? "" : "— click to expand"}
+              Copy as code literal
             </span>
           </button>
           {showLang && (
-            <div className="p-3 space-y-2">
+            <div id="base64-code-literal-panel" className="p-3 space-y-2">
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as LangTarget)}

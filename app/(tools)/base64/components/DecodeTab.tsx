@@ -107,6 +107,7 @@ export function DecodeTab() {
               <button
                 className={cn("btn", showHex && "bg-white/[0.06] border-[var(--hairline-strong)]")}
                 onClick={() => setShowHex((v) => !v)}
+                aria-pressed={showHex}
               >
                 <Eye className="w-3.5 h-3.5" />
                 <span>Hex</span>
