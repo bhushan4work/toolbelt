@@ -411,7 +411,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: "Why does Base64 end with one or two equals signs?",
-        a: "The equals signs are padding. Base64 converts every three bytes into four characters. If the input has one or two bytes left over, one or two = characters complete the final four-character group so the output length stays a multiple of four.",
+        a: "The equals signs are padding. Base64 converts every three bytes into four characters. If one input byte is left over, two = characters complete the final four-character group; if two bytes are left over, one = character completes it. The output length then stays a multiple of four.",
       },
       {
         q: "What is the difference between Base64 and Base64URL?",

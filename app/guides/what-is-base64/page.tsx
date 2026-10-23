@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Calendar, Clock } from "lucide-react";
 import { Faq } from "@/components/shared/Faq";
+import { GuideToolCta } from "@/components/shared/GuideToolCta";
 import { getGuide, getRelatedGuides } from "@/lib/guides";
 import { generateGuideMetadata } from "@/lib/toolMetadata";
 import {
@@ -65,22 +66,7 @@ export default function WhatIsBase64GuidePage() {
             {guide.cardDescription}
           </p>
 
-          <div className="mt-6 p-4 rounded-lg border border-[var(--hairline-strong)] bg-[var(--bg-raise)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <div className="font-display text-sm font-semibold text-[var(--fg)]">
-                Encode or decode Base64 in your browser
-              </div>
-              <div className="text-xs text-[var(--fg-muted)]">
-                Text, images, and files, with URL-safe output and data URIs.
-              </div>
-            </div>
-            <Link
-              href="/base64"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded text-xs font-mono font-medium bg-[var(--amber)] text-black hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              Open Base64 Tool <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <GuideToolCta guide={guide} />
         </header>
 
         <div className="space-y-12 text-[15px] text-[var(--fg-muted)] leading-relaxed">
@@ -413,8 +399,8 @@ Base64:  T        W        F        u`}</pre>
                 Base64 Encoder &amp; Decoder
               </Link>{" "}
               runs entirely in your browser. Paste text to encode or decode it, choose the URL-safe variant when
-              needed, or switch to the image and file tabs to produce a data URI without uploading anything. When you
-              are working with JSON that contains encoded payloads, the{" "}
+              needed, use the Image tab to produce a data URI, or use the File tab to get plain Base64. Nothing is
+              uploaded. When you are working with JSON that contains encoded payloads, the{" "}
               <Link href="/guides/format-and-validate-json" className="text-[var(--cyan)] hover:underline">
                 JSON formatting guide
               </Link>{" "}
