@@ -327,6 +327,15 @@ export function getGuide(slug: string): Guide | undefined {
   return GUIDES.find((g) => g.slug === slug);
 }
 
+// Reverse lookup for tool pages: every guide that names the tool in its
+// relatedTools array. Keeps the guide -> tool mapping declared in one place.
+export function getGuidesForTool(
+  toolSlug: string,
+  guides: Guide[] = GUIDES
+): Guide[] {
+  return guides.filter((g) => g.relatedTools?.includes(toolSlug));
+}
+
 export function getRelatedGuides(
   currentSlug: string,
   limit = 3,
