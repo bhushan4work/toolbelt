@@ -129,7 +129,7 @@ export function DecodeTab() {
             </div>
           )}
           {result && !result.ok && (
-            <div className="flex items-start gap-2 text-[var(--rose)] text-[13px]">
+            <div role="alert" className="flex items-start gap-2 text-[var(--rose)] text-[13px]">
               <AlertCircle className="w-4 h-4 mt-0.5" />
               <span>{result.error}</span>
             </div>

@@ -87,6 +87,16 @@ describe("TextTab switches", () => {
     expect(screen.getByRole("button", { name: "Base64 → Text" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("exposes invalid base64 through an alert", async () => {
+    renderTab();
+    fireEvent.click(screen.getByRole("button", { name: "Base64 → Text" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Base64 to decode" }), {
+      target: { value: "SGVs!bG8=" },
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Invalid base64/i);
+  });
+
   it("swaps a valid conversion result", async () => {
     renderTab();
     fireEvent.change(screen.getByRole("textbox", { name: "Text to encode" }), {

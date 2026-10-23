@@ -44,4 +44,10 @@ describe("DecodeTab data URIs", () => {
     decode("data:text/plain,hello");
     expect(notice()).not.toBeInTheDocument();
   });
+
+  it("exposes invalid base64 through an alert", async () => {
+    decode("SGVs!bG8=");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Invalid base64/i);
+  });
 });
