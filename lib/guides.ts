@@ -321,6 +321,82 @@ export const GUIDES: Guide[] = [
     relatedTools: ["invoice-generator"],
     sitemapPriority: 0.8,
   },
+  {
+    slug: "what-is-base64",
+    path: "/guides/what-is-base64",
+    title: "What Is Base64? Binary-to-Text Encoding Explained",
+    tagline: "Base64 Guide",
+    cardDescription:
+      "Learn what Base64 is, how it turns binary bytes into printable ASCII text, why padding and Base64URL exist, and where encoding stops being safe.",
+    tags: ["Base64", "Encoding", "Web Development", "Security"],
+    accentVar: "--amber",
+    accentHex: "#FFB547",
+    metaTitle: "What Is Base64? Binary-to-Text Encoding Explained",
+    metaDescription:
+      "Base64 is a binary-to-text encoding, not encryption. Learn how it works, why padding matters, Base64URL, common uses, and its security limits.",
+    ogTitle: "What Is Base64? A Practical Guide - CODERCOPS Guides",
+    ogDescription:
+      "Base64 is not encryption. Learn how encoding works, padding, URL-safe Base64, common uses, and security limitations.",
+    publishedAt: "2026-10-23",
+    updatedAt: "2026-10-23",
+    readingTime: "7 min read",
+    totalTime: "PT7M",
+    steps: [
+      {
+        name: "Convert the input to bytes",
+        text: "Base64 operates on bytes, not characters. Text is first encoded with a character encoding such as UTF-8, while images and files are already sequences of bytes.",
+        url: "#step-1",
+      },
+      {
+        name: "Group the bytes in threes",
+        text: "Take three bytes at a time, which is 24 bits. If the final group is shorter, it is padded so it can still be processed as a complete group.",
+        url: "#step-2",
+      },
+      {
+        name: "Split each group into four 6-bit values",
+        text: "Divide the 24 bits into four 6-bit numbers. Each number is between 0 and 63 and maps to one character in the Base64 alphabet.",
+        url: "#step-3",
+      },
+      {
+        name: "Map the values to Base64 characters",
+        text: "Values 0 to 25 map to A-Z, 26 to 51 to a-z, 52 to 61 to 0-9, 62 to +, and 63 to /. A final group of one byte gets two = characters; two bytes get one.",
+        url: "#step-4",
+      },
+      {
+        name: "Decode with the matching alphabet",
+        text: "Reverse the mapping to recover the original bytes. Use Base64URL instead of standard Base64 when the output must travel in a URL or a JWT, and never treat either form as encryption.",
+        url: "#step-5",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Base64 encryption?",
+        a: "No. Base64 is a reversible encoding with no key. Anyone can decode it back to the original bytes, so it provides no confidentiality. Use TLS for data in transit and a proper encryption scheme such as AES-GCM when you need to protect stored data.",
+      },
+      {
+        q: "Can I decode Base64 without a key?",
+        a: "Yes. A standard Base64 decoder only needs the encoded string and the correct alphabet. If the value was encrypted before it was Base64-encoded, you still need the decryption key, but the Base64 layer itself adds no protection.",
+      },
+      {
+        q: "Why does Base64 end with one or two equals signs?",
+        a: "The equals signs are padding. Base64 converts every three bytes into four characters. If the input has one or two bytes left over, one or two = characters complete the final four-character group so the output length stays a multiple of four.",
+      },
+      {
+        q: "What is the difference between Base64 and Base64URL?",
+        a: "Base64URL is a URL-safe variant of Base64. It replaces + with - and / with _, and it usually omits padding = because those characters have special meanings in URLs. JWTs use Base64URL for their header and payload segments.",
+      },
+      {
+        q: "Does Base64 make data smaller?",
+        a: "No. Base64 makes data larger. Every three input bytes become four output characters, so the encoded form is about 33% bigger before any line breaks or metadata. It is a transport and text-safety trade-off, not compression.",
+      },
+      {
+        q: "Is it safe to store secrets as Base64?",
+        a: "No. Base64 only changes how bytes are represented, so a Base64-encoded password, API key, or token is just as readable as the original to anyone who can access it. Kubernetes Secrets, for example, are Base64-encoded by default and still need encryption at rest and strict access control.",
+      },
+    ],
+    relatedTools: ["base64"],
+    sitemapPriority: 0.8,
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {
