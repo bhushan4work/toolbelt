@@ -118,6 +118,74 @@ export const GUIDES: Guide[] = [
     relatedTools: ["json-formatter"],
     sitemapPriority: 0.8,
   },
+  {
+    slug: "decode-jwt",
+    path: "/guides/decode-jwt",
+    title: "How to Decode a JWT and Read Its Claims",
+    tagline: "JWT Guide",
+    cardDescription:
+      "Learn how to split and Base64URL-decode a JWT, interpret standard claims like exp and aud, and verify the signature before trusting a token.",
+    tags: ["JWT", "Authentication", "Security", "Base64URL"],
+    accentVar: "--violet",
+    accentHex: "#9E7BFF",
+    metaTitle: "How to Decode a JWT and Read Its Claims - Guide",
+    metaDescription:
+      "Decode a JWT by Base64URL-decoding its header and payload. Learn what iss, sub, aud, exp, and nbf mean, and why decoding is not verification.",
+    ogTitle: "How to Decode a JWT and Read Its Claims - CODERCOPS Guides",
+    ogDescription:
+      "Step-by-step JWT decoding: read the header and claims, check expiry, and verify the signature before trusting a token.",
+    publishedAt: "2026-10-23",
+    updatedAt: "2026-10-23",
+    readingTime: "6 min read",
+    totalTime: "PT6M",
+    steps: [
+      {
+        name: "Copy the compact token",
+        text: "Take the token from the Authorization: Bearer header, an HttpOnly cookie, or your auth library. A signed JWT has three segments separated by two dots.",
+        url: "#step-1",
+      },
+      {
+        name: "Split it into three segments",
+        text: "Split on \".\" to get the header, payload, and signature. If you do not get exactly three non-empty parts, the value is not a signed JWT.",
+        url: "#step-2",
+      },
+      {
+        name: "Base64URL-decode the header and payload",
+        text: "Decode the first two segments with Base64URL, then parse the resulting UTF-8 text as JSON. The signature is binary data encoded for transport, not a JSON object.",
+        url: "#step-3",
+      },
+      {
+        name: "Read the claims and timestamps",
+        text: "Inspect iss, sub, aud, exp, nbf, iat, and jti, plus any app-specific claims. Timestamps are seconds since the Unix epoch, not milliseconds.",
+        url: "#step-4",
+      },
+      {
+        name: "Verify the signature before trusting the token",
+        text: "Use the issuer's key and a maintained JWT library to verify the signature, algorithm, audience, issuer, and time claims. Decoding alone proves nothing about authenticity.",
+        url: "#step-5",
+      },
+    ],
+    faqs: [
+      {
+        q: "Can I decode a JWT without the secret key?",
+        a: "Yes. The header and payload are Base64URL-encoded, not encrypted, so anyone with the token can decode and read them. A key is only needed to create or verify the signature: the shared secret for HMAC, or the private and public halves of an RSA or ECDSA key pair.",
+      },
+      {
+        q: "Is it safe to paste a JWT into an online decoder?",
+        a: "Only if the tool processes the token locally in your browser. A JWT is a bearer credential, so a tool that uploads it to a server exposes it to that server and its logs. The CODERCOPS JWT Decoder runs entirely client-side.",
+      },
+      {
+        q: "Does decoding a JWT verify that it is valid?",
+        a: "No. Decoding only reveals the contents. Verification recomputes the signature with a trusted key and checks claims such as exp, nbf, aud, and iss. A token can decode perfectly and still be forged, expired, or issued for another audience.",
+      },
+      {
+        q: "Why do JWT timestamps look like 1792713600?",
+        a: "JWT NumericDate values count seconds since 1970-01-01 UTC. Multiply by 1000 to get JavaScript milliseconds, or use a decoder that displays the human-readable date for exp, nbf, and iat.",
+      },
+    ],
+    relatedTools: ["jwt-decoder"],
+    sitemapPriority: 0.8,
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {
