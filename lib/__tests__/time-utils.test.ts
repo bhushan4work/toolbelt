@@ -95,6 +95,22 @@ describe("toEpoch", () => {
     expect(toEpoch("February 30, 2024").ok).toBe(false);
     expect(toEpoch("Feb 30 2024").ok).toBe(false);
     expect(toEpoch("2024/02/30").ok).toBe(false);
+    expect(toEpoch("30 February 2024").ok).toBe(false);
+    expect(toEpoch("Tue, 31 Apr 2024 10:00:00 GMT").ok).toBe(false);
+  });
+
+  it("accepts month names followed by a four-digit year without a day", () => {
+    const february = toEpoch("Feb 3000");
+    expect(february.ok).toBe(true);
+    if (february.ok) {
+      expect(new Date(february.milliseconds).getFullYear()).toBe(3000);
+    }
+
+    const april = toEpoch("Apr 3100");
+    expect(april.ok).toBe(true);
+    if (april.ok) {
+      expect(new Date(april.milliseconds).getFullYear()).toBe(3100);
+    }
   });
 
   it("accepts valid leap days in the supported formats", () => {
