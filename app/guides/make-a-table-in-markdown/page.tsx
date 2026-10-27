@@ -176,7 +176,7 @@ export default function MakeATableInMarkdownGuidePage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4">Any other language, such as Python, YAML or SQL, is still shown in a code block, just without colors. The preview reads everything after the opening backticks as the language name, so extra words there, as in <code className={codeClass}>{"```ts title=\"a.ts\""}</code>, stop the highlighting. Put only the language name.</p>
+            <p className="mt-4">Any other language, such as Python, YAML or SQL, is still shown in a code block, just without colors. The preview reads the first word after the opening backticks as the language name, so extra words there, as in <code className={codeClass}>{"```ts title=\"a.ts\""}</code>, do not stop the highlighting.</p>
             <h3 className={h3Class}>Autolinks</h3>
             <p>A plain <code className={codeClass}>https://example.com</code> becomes a link, and so does <code className={codeClass}>www.example.com</code> (its link starts with <code className={codeClass}>http://</code>) and an email address (its link starts with <code className={codeClass}>mailto:</code>). A URL in angle brackets, <code className={codeClass}>&lt;https://example.com&gt;</code>, is a link too.</p>
           </section>

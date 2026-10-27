@@ -220,10 +220,24 @@ describe("table guide: fenced code blocks", () => {
     }
   });
 
-  it("stops highlighting when there are extra words after the language", () => {
-    const out = html('```ts title="a.ts"', "const a = 1;", "```");
+  it("keeps highlighting when extra words follow the language", () => {
+    const tsOut = html('```ts title="a.ts"', "const a: number = 1;", "```");
+    expect(tsOut).toContain('<pre class="language-ts">');
+    expect(tsOut).toContain('class="token');
+
+    const jsOut = html("```JS extra", "const a = 1;", "```");
+    expect(jsOut).toContain('<pre class="language-js">');
+    expect(jsOut).toContain('class="token');
+
+    const tabOut = html("```ts\ttitle=\"a.ts\"", "const a: number = 1;", "```");
+    expect(tabOut).toContain('<pre class="language-ts">');
+    expect(tabOut).toContain('class="token');
+  });
+
+  it("retains plain-code behavior for fences without a language", () => {
+    const out = html("```", "const a = 1;", "```");
+    expect(out).toContain('<pre class="language-text"><code>const a = 1;</code></pre>');
     expect(out).not.toContain('class="token');
-    expect(out).toContain("const a = 1;");
   });
 });
 

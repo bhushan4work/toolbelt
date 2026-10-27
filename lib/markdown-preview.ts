@@ -24,7 +24,7 @@ export function insertMarkdown(markdown: string, start: number, end: number, bef
 }
 
 function safeLanguage(lang: string | undefined) {
-  return (lang ?? "").toLowerCase().replace(/[^\w-]/g, "");
+  return (lang ?? "").split(/[ \t]/)[0].toLowerCase().replace(/[^\w-]/g, "");
 }
 
 marked.use({ renderer: { code({ text, lang }) {
